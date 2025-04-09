@@ -69,18 +69,6 @@ const SearchPage = () => {
     setInput(e.target.value);
   };
 
-  const handleDropdownChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    if (value === "document") {
-      setSelectedApi("http://localhost:5000/query");
-      if (localStorage.getItem("hideDocumentInfo") !== "true") {
-        setShowDocPopup(true);
-      }
-    } else {
-      setSelectedApi("http://localhost:8000/query");
-    }
-  };
-
   const handleClearChat = () => {
     const welcome: ChatMessage = {
       id: Date.now(),
@@ -180,14 +168,43 @@ const SearchPage = () => {
     setInput("");
   };
 
+  const handleToggleChange = (value: string) => {
+    if (value === "document") {
+      setSelectedApi("http://localhost:5000/query");
+      if (localStorage.getItem("hideDocumentInfo") !== "true") {
+        setShowDocPopup(true);
+      }
+    } else {
+      setSelectedApi("http://localhost:8000/query");
+    }
+  };
+
+
   return (
     <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <div className="flex gap-3 items-center">
-          <select onChange={handleDropdownChange} className="p-2 border rounded bg-white">
-            <option value="document">Document Upload</option>
-            <option value="datasource">Datasource</option>
-          </select>
+          <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
+            <button
+              onClick={() => handleToggleChange("document")}
+              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("5000")
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600"
+                }`}
+            >
+              Document Query
+            </button>
+            <button
+              onClick={() => handleToggleChange("datasource")}
+              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("8000")
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600"
+                }`}
+            >
+              Datasource Query
+            </button>
+          </div>
+
           {selectedApi.includes("5000") && (
             <input
               type="file"
