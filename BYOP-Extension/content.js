@@ -66,5 +66,9 @@ window.addEventListener("message", (event) => {
     document.getElementById("chatbot-toggle-btn")?.remove();
     window.__chatbotInjected = false;
   }
+  if (event.data?.type === "EXPAND_CHATBOT") {
+  window.open("http://localhost:5173/search", "_blank");
+}
+
 });
 })();

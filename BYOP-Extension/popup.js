@@ -4,6 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBtn = document.getElementById('clear-chat');
   const closeChatBtn = document.getElementById('close-chat');
 
+  const expandInfo = document.getElementById('expand-info');
+expandInfo?.addEventListener('click', () => {
+  window.parent.postMessage({ type: "EXPAND_CHATBOT" }, "*");
+});
+
+
   let userAvatar = '🧑'; 
 let selectedApi = "http://localhost:5000/query"; // default: Document
 
