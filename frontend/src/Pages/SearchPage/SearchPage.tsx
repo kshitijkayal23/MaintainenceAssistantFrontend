@@ -158,7 +158,7 @@ const SearchPage = () => {
 
 
   return (
-    <div className="flex flex-col flex-grow bg-white h-full">
+    <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <select
@@ -177,8 +177,7 @@ const SearchPage = () => {
       </div>
 
       {/* Chat log */}
-      <div className="overflow-y-auto px-4 py-2 pb-40 bg-gray-100"
-        style={{ height: "calc(100vh - 132px)" }}>
+      <div className="flex-1 overflow-y-auto px-4 py-2 pb-40 bg-gray-100">
         {chat.map((msg) => (
           <div
             key={msg.id}
@@ -223,7 +222,10 @@ const SearchPage = () => {
                     )}
                   </>
                 )}
-                <div className="text-[10px] mt-1 text-gray-500 text-right">{msg.timestamp}</div>
+                {msg.sender === "bot" ? (
+                  <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
+                ) : null}
+
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
             </div>
