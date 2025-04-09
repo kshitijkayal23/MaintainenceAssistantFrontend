@@ -60,10 +60,11 @@
     iframe.style.display = visible ? 'block' : 'none';
   });
 
-  window.addEventListener("message", (event) => {
-    if (event.data?.type === "CLOSE_CHATBOT_IFRAME") {
-      iframe.style.display = "none";
-      visible = false;
-    }
-  });
+window.addEventListener("message", (event) => {
+  if (event.data?.type === "CLOSE_CHATBOT_IFRAME") {
+    document.getElementById("chatbot-iframe")?.remove();
+    document.getElementById("chatbot-toggle-btn")?.remove();
+    window.__chatbotInjected = false;
+  }
+});
 })();

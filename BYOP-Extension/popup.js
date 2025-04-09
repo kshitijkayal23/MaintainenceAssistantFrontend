@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById('chat-input');
   const log = document.getElementById('chat-log');
   const clearBtn = document.getElementById('clear-chat');
-  const avatarSelector = document.getElementById('avatar-selector');
+  const closeChatBtn = document.getElementById('close-chat');
 
 let userAvatar = '🧑'; // default neutral avatar
 
@@ -38,6 +38,16 @@ appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
     log.innerHTML = '';
     appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
   });
+
+  closeChatBtn?.addEventListener('click', () => {
+  // Post message to parent window to remove iframe
+  window.parent.postMessage({ type: "CLOSE_CHATBOT_IFRAME" }, "*");
+
+  // Also remove floating button if it exists
+window.parent.postMessage({ type: "CLOSE_CHATBOT_IFRAME" }, "*");
+
+});
+
 
   function appendMessage(text, sender, isTyping = false) {
     const msgWrapper = document.createElement('div');

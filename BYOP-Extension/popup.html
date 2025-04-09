@@ -45,10 +45,12 @@
       outline: none;
     }
 
-    #clear-chat {
-      cursor: pointer;
-      font-size: 18px;
-    }
+#clear-chat {
+    cursor: pointer;
+    font-size: 18px;
+    position: absolute;
+    left: 10px;
+}
 
     #chat-log {
       flex: 1;
@@ -58,6 +60,19 @@
       display: flex;
       flex-direction: column;
     }
+
+    #close-chat {
+  cursor: pointer;
+  font-size: 18px;
+  padding: 2px 6px;
+  color: white;
+  margin-top: -2px;
+}
+
+#close-chat:hover {
+  opacity: 0.8;
+}
+
 
     #chat-input {
       border: none;
@@ -144,15 +159,16 @@
 <div class="chat-header">
   <span></span>
   <div class="chat-header-actions">
+    <span id="clear-chat" title="Clear Chat">🗑️</span>
     <select id="query-mode" title="Query Mode">
-      <option value="doc">Query with doc</option>
+      <option value="doc">Query with document</option>
       <option value="data">Query with datasource</option>
     </select>
     <label class="switch">
       <input type="checkbox" id="online-toggle">
       <span class="slider"></span>
     </label>
-    <span id="clear-chat" title="Clear Chat">🗑️</span>
+        <span id="close-chat" title="Close Chat">x</span>
   </div>
 </div>
     <div id="chat-log" class="chat-log"></div>
