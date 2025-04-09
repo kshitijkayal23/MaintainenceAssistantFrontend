@@ -1,8 +1,10 @@
+html,
 body {
     font-family: 'Segoe UI', sans-serif;
     margin: 0;
     padding: 0;
     background: white;
+    background-color: #fff;
 }
 
 #chatbot-container {
@@ -19,12 +21,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-#close-chatbot {
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
+    position: relative;
 }
 
 .chat-log {
@@ -64,4 +61,23 @@ body {
     font-size: 14px;
     border-top: 1px solid #ccc;
     outline: none;
+}
+
+.chat-header-actions {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    gap: 10px;
+}
+
+.toggle-label {
+    font-size: 12px;
+    color: white;
+    user-select: none;
+}
+
+.toggle-label input {
+    margin-right: 4px;
 }

@@ -7,10 +7,12 @@
 </head>
 <body>
   <div id="chatbot-container">
-    <div class="chat-header">
-      <span>Maintenance Assistant</span>
-      <span id="close-chatbot" title="Close">&times;</span>
-    </div>
+<div class="chat-header">
+  <span>Maintenance Assistant</span>
+  <div class="chat-header-actions">
+    <span id="clear-chat" title="Clear Chat" style="position:absolute; right: 10px; cursor: pointer">🗑️</span>
+  </div>
+</div>
     <div id="chat-log" class="chat-log"></div>
     <input id="chat-input" type="text" placeholder="Ask something..." />
   </div>

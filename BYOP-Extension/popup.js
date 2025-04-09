@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById('chat-input');
   const log = document.getElementById('chat-log');
+  const clearBtn = document.getElementById('clear-chat');
 
   appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
 
@@ -16,12 +17,18 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: msg })
         });
+
         const result = await response.json();
         appendMessage(result.answer || 'No response', 'bot');
       } catch (err) {
         appendMessage("Error: Could not reach backend.", 'bot');
       }
     }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    log.innerHTML = '';
+    appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
   });
 
   function appendMessage(text, sender) {
@@ -60,8 +67,4 @@ document.addEventListener("DOMContentLoaded", () => {
     log.appendChild(msgDiv);
     log.scrollTop = log.scrollHeight;
   }
-
-  document.getElementById('close-chatbot')?.addEventListener('click', () => {
-    window.parent.postMessage({ type: "CLOSE_CHATBOT_IFRAME" }, "*");
-  });
 });
