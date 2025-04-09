@@ -77,8 +77,17 @@ const SearchPage = () => {
   };
 
   const handleClearChat = () => {
-    insertWelcomeMessage();
+    const welcome: ChatMessage = {
+      id: Date.now(),
+      sender: "bot", // now type-safe
+      message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
+      timestamp: new Date().toLocaleTimeString(),
+      session: sessionId,
+    };
+    setChat([welcome]);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([welcome]));
   };
+
 
   const queryDynamicAPI = async (query: string) => {
     try {
@@ -103,6 +112,8 @@ const SearchPage = () => {
 
     const userMessageId = Date.now();
 
+    const loaderId = userMessageId + 1;
+
     setChat((prev) => [
       ...prev,
       {
@@ -112,14 +123,8 @@ const SearchPage = () => {
         timestamp: new Date().toLocaleTimeString(),
         session: sessionId,
       },
-    ]);
-
-    // 2. Append bot loader
-    const loaderId = userMessageId + 1;
-    setChat(prev => [
-      ...prev,
       {
-        id: userMessageId + 1,
+        id: loaderId,
         sender: "bot",
         message: "...",
         timestamp: "",
@@ -127,6 +132,7 @@ const SearchPage = () => {
         session: sessionId,
       },
     ]);
+
 
     // 3. Fetch response
     const res = await queryDynamicAPI(input);
@@ -152,7 +158,7 @@ const SearchPage = () => {
 
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col flex-grow bg-white min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
         <select
