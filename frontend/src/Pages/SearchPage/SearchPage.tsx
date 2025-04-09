@@ -88,7 +88,6 @@ const SearchPage = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([welcome]));
   };
 
-
   const queryDynamicAPI = async (query: string) => {
     try {
       const res = await fetch(selectedApi, {
@@ -104,7 +103,11 @@ const SearchPage = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    setCopied(true);  // Set copied state to true
+    setTimeout(() => setCopied(false), 2000);  // Reset copied state after 2 seconds
   };
+
+  const [copied, setCopied] = useState(false);  // Track if text is copied
 
   const onSearchSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -133,7 +136,6 @@ const SearchPage = () => {
       },
     ]);
 
-
     // 3. Fetch response
     const res = await queryDynamicAPI(input);
     const responseText = res.answer || "No response";
@@ -153,9 +155,6 @@ const SearchPage = () => {
 
     setInput("");
   };
-
-
-
 
   return (
     <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
@@ -200,14 +199,13 @@ const SearchPage = () => {
                 ) : msg.message.length > 300 && msg.sender === "bot" ? (
                   <>
                     <ExpandableText text={msg.message} />
-                      <button
-                        className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
-                        title="Copy to clipboard"
-                        onClick={() => copyToClipboard(msg.message)}
-                      >
-                        📋
-                      </button>
-
+                    <button
+                      className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
+                      title={copied ? "Copied" : "Copy to clipboard"}  // Tooltip shows copied after action
+                      onClick={() => copyToClipboard(msg.message)}
+                    >
+                      📋
+                    </button>
                   </>
                 ) : (
                   <>
@@ -215,9 +213,10 @@ const SearchPage = () => {
                     {msg.sender === "bot" && (
                       <button
                         className="absolute bottom-1 right-2 text-xs text-blue-500"
+                        title={copied ? "Copied" : "Copy to clipboard"}
                         onClick={() => copyToClipboard(msg.message)}
                       >
-                      📋
+                        📋
                       </button>
                     )}
                   </>
@@ -225,7 +224,6 @@ const SearchPage = () => {
                 {msg.sender === "bot" ? (
                   <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
                 ) : null}
-
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
             </div>
@@ -313,7 +311,5 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
-
-
 
 export default SearchPage;
