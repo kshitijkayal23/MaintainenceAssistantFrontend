@@ -234,30 +234,57 @@ const SearchPage = () => {
         </button>
 
         {[...new Set(chatHistory.map(m => m.session))].map(session => (
-          <div key={session} className="flex justify-between items-center mb-2">
+          <div
+            key={session}
+            className={`flex items-center w-full px-3 py-2 rounded mb-2 justify-between ${session === sessionId ? "bg-blue-600 text-white" : "hover:bg-blue-200 text-gray-800"
+              }`}
+          >
             <button
               onClick={() => loadSession(session)}
-              className={`flex-1 text-left px-3 py-2 rounded ${session === sessionId ? "bg-blue-600 text-white" : "hover:bg-blue-200 text-gray-800"}`}
+              className="flex-1 text-left truncate"
             >
               {sessionNameMap[session] || "Untitled"}
             </button>
-            <button
-              onClick={() => {
-                const updatedHistory = chatHistory.filter(m => m.session !== session);
-                const updatedMap = { ...sessionNameMap };
-                delete updatedMap[session];
-                setChatHistory(updatedHistory);
-                setSessionNameMap(updatedMap);
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
-                localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
-              }}
-              className="ml-2 text-red-500 hover:text-red-700"
-              title="Delete session"
-            >
-              🗑️
-            </button>
+
+            {session === sessionId && (
+              <div className="flex items-center ml-2 gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newName = prompt("Rename chat group:", sessionNameMap[session] || "Untitled");
+                    if (newName) {
+                      const updatedMap = { ...sessionNameMap, [session]: newName };
+                      setSessionNameMap(updatedMap);
+                      localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+                    }
+                  }}
+                  className="text-white hover:text-gray-200 text-sm"
+                  title="Rename"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const updatedHistory = chatHistory.filter(m => m.session !== session);
+                    const updatedMap = { ...sessionNameMap };
+                    delete updatedMap[session];
+                    setChatHistory(updatedHistory);
+                    setSessionNameMap(updatedMap);
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
+                    localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+                  }}
+                  className="text-white hover:text-red-300 text-sm"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            )}
           </div>
+
         ))}
+
       </div>
 
 
