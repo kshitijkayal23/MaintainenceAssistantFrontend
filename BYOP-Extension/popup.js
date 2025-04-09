@@ -4,15 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBtn = document.getElementById('clear-chat');
   const avatarSelector = document.getElementById('avatar-selector');
 
-  let userAvatar = localStorage.getItem('userAvatar') || '🧑';
-  avatarSelector.value = userAvatar;
+let userAvatar = '🧑'; // default neutral avatar
 
-  avatarSelector.addEventListener('change', () => {
-    userAvatar = avatarSelector.value;
-    localStorage.setItem('userAvatar', userAvatar);
-  });
 
-  appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
+appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
 
   input.addEventListener('keypress', async function (e) {
     if (e.key === 'Enter' && input.value.trim()) {

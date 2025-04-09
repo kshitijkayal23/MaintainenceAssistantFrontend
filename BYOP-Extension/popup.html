@@ -79,6 +79,58 @@
     .typing {
       animation: blink 1s infinite steps(1);
     }
+    #query-mode {
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+}
+
+/* Toggle switch (for online/offline) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: #4CAF50;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
 
     @keyframes blink {
       0% { opacity: 0; }
@@ -89,17 +141,20 @@
 </head>
 <body>
   <div id="chatbot-container">
-    <div class="chat-header">
-      <span>Maintenance Assistant</span>
-      <div class="chat-header-actions">
-        <select id="avatar-selector" title="Choose your avatar">
-          <option value="🧑">🧑 Neutral</option>
-          <option value="👨">👨 Male</option>
-          <option value="👩">👩 Female</option>
-        </select>
-        <span id="clear-chat" title="Clear Chat">🗑️</span>
-      </div>
-    </div>
+<div class="chat-header">
+  <span></span>
+  <div class="chat-header-actions">
+    <select id="query-mode" title="Query Mode">
+      <option value="doc">Query with doc</option>
+      <option value="data">Query with datasource</option>
+    </select>
+    <label class="switch">
+      <input type="checkbox" id="online-toggle">
+      <span class="slider"></span>
+    </label>
+    <span id="clear-chat" title="Clear Chat">🗑️</span>
+  </div>
+</div>
     <div id="chat-log" class="chat-log"></div>
     <input id="chat-input" type="text" placeholder="Ask something..." />
   </div>
