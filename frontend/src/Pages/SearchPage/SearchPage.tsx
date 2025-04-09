@@ -214,10 +214,10 @@ const SearchPage = () => {
                     {msg.message}
                     {msg.sender === "bot" && (
                       <button
-                        className="absolute bottom-1 right-2 text-xs text-blue-500 underline"
+                        className="absolute bottom-1 right-2 text-xs text-blue-500"
                         onClick={() => copyToClipboard(msg.message)}
                       >
-                        Copy
+                      📋
                       </button>
                     )}
                   </>
