@@ -37,27 +37,6 @@ const SearchPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  const appendMessage = (message: string, sender: "user" | "bot", loading = false): number => {
-    const id = Date.now();
-    setChat((prev) => [
-      ...prev,
-      {
-        id,
-        sender,
-        message,
-        timestamp: new Date().toLocaleTimeString(),
-        loading,
-      },
-    ]);
-    return id;
-  };
-
-  const updateMessage = (id: number, newMessage: string) => {
-    setChat((prev) =>
-      prev.map((msg) => (msg.id === id ? { ...msg, message: newMessage, loading: false } : msg))
-    );
-  };
-
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
@@ -91,14 +70,55 @@ const SearchPage = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    appendMessage(input, "user");
-    const loaderId = appendMessage("...", "bot", true);
+    const userMessageId = Date.now();
 
+    // 1. Append user message
+    setChat(prev => [
+      ...prev,
+      {
+        id: userMessageId,
+        sender: "user",
+        message: input,
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
+
+    // 2. Append bot loader
+    const loaderId = userMessageId + 1;
+    setChat(prev => [
+      ...prev,
+      {
+        id: loaderId,
+        sender: "bot",
+        message: "...",
+        timestamp: "",
+        loading: true,
+      },
+    ]);
+
+    // 3. Fetch response
     const res = await queryDynamicAPI(input);
-    updateMessage(loaderId, res.answer || "No response");
+    const responseText = res.answer || "No response";
 
-    setInput("");
+    // 4. Update bot loader with actual response
+    setChat(prev =>
+      prev.map(msg =>
+        msg.id === loaderId
+          ? {
+            ...msg,
+            message: responseText,
+            timestamp: new Date().toLocaleTimeString(),
+            loading: false,
+          }
+          : msg
+      )
+    );
+
+    setInput(""); // clear input box
   };
+
+
+
 
   return (
     <div className="flex flex-col h-screen bg-white">
