@@ -6,13 +6,39 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   loading?: boolean;
+  session: string;
 }
+
+const generateSessionId = () => `session-${Date.now()}`;
+
+const LOCAL_STORAGE_KEY = "chat_history";
 
 const SearchPage = () => {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [sessionId] = useState(generateSessionId());
   const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Load chat history on mount
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const history = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (history) {
+      setChat(JSON.parse(history));
+    } else {
+      insertWelcomeMessage();
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  // Scroll to bottom when chat updates
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chat));
+  }, [chat]);
 
   const insertWelcomeMessage = () => {
     setChat([
@@ -21,6 +47,7 @@ const SearchPage = () => {
         sender: "bot",
         message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
         timestamp: new Date().toLocaleTimeString(),
+        session: sessionId,
       },
     ]);
   };
@@ -66,20 +93,24 @@ const SearchPage = () => {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   const onSearchSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessageId = Date.now();
 
-    // 1. Append user message
-    setChat(prev => [
+    setChat((prev) => [
       ...prev,
       {
         id: userMessageId,
         sender: "user",
         message: input,
         timestamp: new Date().toLocaleTimeString(),
+        session: sessionId,
       },
     ]);
 
@@ -88,11 +119,12 @@ const SearchPage = () => {
     setChat(prev => [
       ...prev,
       {
-        id: loaderId,
+        id: userMessageId + 1,
         sender: "bot",
         message: "...",
         timestamp: "",
         loading: true,
+        session: sessionId,
       },
     ]);
 
@@ -100,10 +132,9 @@ const SearchPage = () => {
     const res = await queryDynamicAPI(input);
     const responseText = res.answer || "No response";
 
-    // 4. Update bot loader with actual response
-    setChat(prev =>
-      prev.map(msg =>
-        msg.id === loaderId
+    setChat((prev) =>
+      prev.map((msg) =>
+        msg.id === userMessageId + 1
           ? {
             ...msg,
             message: responseText,
@@ -114,7 +145,7 @@ const SearchPage = () => {
       )
     );
 
-    setInput(""); // clear input box
+    setInput("");
   };
 
 
@@ -150,8 +181,8 @@ const SearchPage = () => {
               {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
               <div
                 className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
+                  ? "bg-blue-600 text-white rounded-br-none"
+                  : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
                   }`}
               >
                 {msg.loading ? (
@@ -161,11 +192,30 @@ const SearchPage = () => {
                     <span className="dot delay-300" />
                   </span>
                 ) : msg.message.length > 300 && msg.sender === "bot" ? (
-                  <ExpandableText text={msg.message} />
-                ) : (
-                  msg.message
-                )}
+                  <>
+                    <ExpandableText text={msg.message} />
+                      <button
+                        className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
+                        title="Copy to clipboard"
+                        onClick={() => copyToClipboard(msg.message)}
+                      >
+                        📋
+                      </button>
 
+                  </>
+                ) : (
+                  <>
+                    {msg.message}
+                    {msg.sender === "bot" && (
+                      <button
+                        className="absolute bottom-1 right-2 text-xs text-blue-500 underline"
+                        onClick={() => copyToClipboard(msg.message)}
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </>
+                )}
                 <div className="text-[10px] mt-1 text-gray-500 text-right">{msg.timestamp}</div>
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
@@ -201,7 +251,7 @@ const SearchPage = () => {
         </button>
       </form>
 
-      {/* Typing Animation Styles */}
+      {/* Typing Animation */}
       <style>
         {`
           .typing-dots {
