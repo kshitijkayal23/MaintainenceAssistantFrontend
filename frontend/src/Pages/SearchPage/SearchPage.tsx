@@ -105,6 +105,33 @@ const SearchPage = () => {
     }
   };
 
+  const uploadDocument = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      console.log("Upload response:", data);
+    } catch (err) {
+      console.error("Document upload error:", err);
+    }
+  };
+
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedDoc(file);
+      uploadDocument(file);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -180,7 +207,7 @@ const SearchPage = () => {
             <input
               type="file"
               accept=".pdf,.txt,.doc,.docx"
-              onChange={(e) => setUploadedDoc(e.target.files?.[0] || null)}
+              onChange={handleFileUpload}
               className="text-sm"
             />
           )}
