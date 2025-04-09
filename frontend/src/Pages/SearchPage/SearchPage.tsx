@@ -158,9 +158,9 @@ const SearchPage = () => {
 
 
   return (
-    <div className="flex flex-col flex-grow bg-white min-h-0">
+    <div className="flex flex-col flex-grow bg-white h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <select
           onChange={handleDropdownChange}
           className="p-2 border rounded bg-white"
@@ -177,7 +177,8 @@ const SearchPage = () => {
       </div>
 
       {/* Chat log */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 bg-gray-100 min-h-0">
+      <div className="overflow-y-auto px-4 py-2 pb-40 bg-gray-100"
+        style={{ height: "calc(100vh - 132px)" }}>
         {chat.map((msg) => (
           <div
             key={msg.id}
@@ -234,7 +235,7 @@ const SearchPage = () => {
       {/* Chat input */}
       <form
         onSubmit={onSearchSubmit}
-        className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end"
+        className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
       >
         <textarea
           className="flex-1 resize-none border border-gray-300 p-3 rounded-lg shadow-sm text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -286,10 +287,21 @@ const SearchPage = () => {
 const ExpandableText = ({ text }: { text: string }) => {
   const [expanded, setExpanded] = useState(false);
   const shortText = text.slice(0, 300);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (expanded) {
+      setTimeout(() => {
+        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100); // slight delay so DOM has time to render
+    }
+  }, [expanded]);
 
   return (
-    <div>
-      <span className="whitespace-pre-wrap">{expanded ? text : `${shortText}...`}</span>
+    <div ref={contentRef}>
+      <span className="whitespace-pre-wrap">
+        {expanded ? text : `${shortText}...`}
+      </span>
       <button
         onClick={() => setExpanded(!expanded)}
         className="ml-2 text-blue-500 text-xs underline"
@@ -299,6 +311,7 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
+
 
 
 export default SearchPage;
