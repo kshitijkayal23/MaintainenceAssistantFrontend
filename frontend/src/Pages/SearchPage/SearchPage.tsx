@@ -10,7 +10,6 @@ interface ChatMessage {
 }
 
 const generateSessionId = () => `session-${Date.now()}`;
-
 const LOCAL_STORAGE_KEY = "chat_history";
 
 const SearchPage = () => {
@@ -20,7 +19,6 @@ const SearchPage = () => {
   const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Load chat history on mount
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const history = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -34,7 +32,6 @@ const SearchPage = () => {
     };
   }, []);
 
-  // Scroll to bottom when chat updates
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chat));
@@ -52,18 +49,6 @@ const SearchPage = () => {
     ]);
   };
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    insertWelcomeMessage();
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
-
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
@@ -79,7 +64,7 @@ const SearchPage = () => {
   const handleClearChat = () => {
     const welcome: ChatMessage = {
       id: Date.now(),
-      sender: "bot", // now type-safe
+      sender: "bot",
       message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
       timestamp: new Date().toLocaleTimeString(),
       session: sessionId,
@@ -87,7 +72,6 @@ const SearchPage = () => {
     setChat([welcome]);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([welcome]));
   };
-
 
   const queryDynamicAPI = async (query: string) => {
     try {
@@ -111,7 +95,6 @@ const SearchPage = () => {
     if (!input.trim()) return;
 
     const userMessageId = Date.now();
-
     const loaderId = userMessageId + 1;
 
     setChat((prev) => [
@@ -133,29 +116,42 @@ const SearchPage = () => {
       },
     ]);
 
-
-    // 3. Fetch response
     const res = await queryDynamicAPI(input);
-    const responseText = res.answer || "No response";
+
+    let responseText = "";
+
+    if (selectedApi.includes("5000")) {
+      if (res?.top_matches && res.top_matches.length > 0) {
+        responseText = res.top_matches
+          .map(
+            (match: any, idx: number) =>
+              `📄 Match ${idx + 1}:\n${match.content.trim()}\n\n🔗 Source: ${match.metadata?.source || "Unknown"}`
+          )
+          .join("\n\n");
+      } else {
+        responseText = "No matches found.";
+      }
+    } else if (selectedApi.includes("8000")) {
+      responseText = res.answer || "No response.";
+    } else {
+      responseText = "Unexpected API response.";
+    }
 
     setChat((prev) =>
       prev.map((msg) =>
-        msg.id === userMessageId + 1
+        msg.id === loaderId
           ? {
-            ...msg,
-            message: responseText,
-            timestamp: new Date().toLocaleTimeString(),
-            loading: false,
-          }
+              ...msg,
+              message: responseText,
+              timestamp: new Date().toLocaleTimeString(),
+              loading: false,
+            }
           : msg
       )
     );
 
     setInput("");
   };
-
-
-
 
   return (
     <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
@@ -186,10 +182,11 @@ const SearchPage = () => {
             <div className="flex items-end max-w-[80%]">
               {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
               <div
-                className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user"
-                  ? "bg-blue-600 text-white rounded-br-none"
-                  : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
-                  }`}
+                className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${
+                  msg.sender === "user"
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
+                }`}
               >
                 {msg.loading ? (
                   <span className="typing-dots inline-block w-6 h-3 relative">
@@ -200,14 +197,13 @@ const SearchPage = () => {
                 ) : msg.message.length > 300 && msg.sender === "bot" ? (
                   <>
                     <ExpandableText text={msg.message} />
-                      <button
-                        className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
-                        title="Copy to clipboard"
-                        onClick={() => copyToClipboard(msg.message)}
-                      >
-                        📋
-                      </button>
-
+                    <button
+                      className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
+                      title="Copy to clipboard"
+                      onClick={() => copyToClipboard(msg.message)}
+                    >
+                      📋
+                    </button>
                   </>
                 ) : (
                   <>
@@ -217,7 +213,7 @@ const SearchPage = () => {
                         className="absolute bottom-1 right-2 text-xs text-blue-500"
                         onClick={() => copyToClipboard(msg.message)}
                       >
-                      📋
+                        📋
                       </button>
                     )}
                   </>
@@ -225,7 +221,6 @@ const SearchPage = () => {
                 {msg.sender === "bot" ? (
                   <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
                 ) : null}
-
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
             </div>
@@ -295,7 +290,7 @@ const ExpandableText = ({ text }: { text: string }) => {
     if (expanded) {
       setTimeout(() => {
         contentRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 100); // slight delay so DOM has time to render
+      }, 100);
     }
   }, [expanded]);
 
@@ -313,7 +308,5 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
-
-
 
 export default SearchPage;
