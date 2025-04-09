@@ -33,3 +33,31 @@ export const queryFlaskAPI = async (question: string): Promise<string | undefine
     return "An unexpected error occurred.";
   }
 };
+
+export const uploadDocumentToAPI = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch("http://localhost:5000/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage =
+        typeof errorData?.message === "string" ? errorData.message : response.statusText;
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data.message || "Uploaded successfully";
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Upload error:", error.message);
+      return error.message;
+    }
+    return "An unexpected error occurred during upload.";
+  }
+};
