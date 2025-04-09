@@ -78,13 +78,18 @@ const SearchPage = () => {
   const handleToggleChange = (mode: string) => {
     if (mode === "document") {
       setSelectedApi("http://localhost:5000/query");
-      if (localStorage.getItem("hideDocumentInfo") !== "true") {
+      if (
+        localStorage.getItem("hideDocumentInfo") !== "true" &&
+        !selectedApi.includes("5000")
+      ) {
         setShowDocPopup(true);
       }
     } else {
       setSelectedApi("http://localhost:8000/query");
+      setShowDocPopup(false);
     }
   };
+
 
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
