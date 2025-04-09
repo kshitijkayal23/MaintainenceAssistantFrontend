@@ -1,6 +1,7 @@
 import { useState, ChangeEvent, SyntheticEvent } from "react";
 import { queryFlaskAPI } from "../../api";
 import Search from "../../Components/Search/Search";
+import SearchResult from "../../Components/SearchResult/SearchResul";
 
 interface Props {}
 
@@ -17,12 +18,12 @@ const SearchPage = (props: Props) => {
     e.preventDefault();
     const result = await queryFlaskAPI(search);
     setServerError(result ?? null);
-    if (typeof result === "string") {
-      setServerError(result);
-    } else if (Array.isArray(result)) {
+    // if (typeof result === "string") {
+    //   setServerError(result);
+    // } else if (Array.isArray(result)) {
       setSearchResult(result);
       console.log(result);
-    }
+    // }
   };
   return (
     <>
@@ -33,6 +34,8 @@ const SearchPage = (props: Props) => {
       />
 
       {serverError && <div>Unable to connect to API</div>}
+
+      {searchResult && <SearchResult result={searchResult} />}
     </>
   );
 };
