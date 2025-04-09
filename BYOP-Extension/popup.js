@@ -3,17 +3,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const log = document.getElementById('chat-log');
   const clearBtn = document.getElementById('clear-chat');
   const closeChatBtn = document.getElementById('close-chat');
-  const queryModeSelector = document.getElementById('query-mode');
 
   let userAvatar = '🧑'; 
-  let selectedApi = "http://localhost:5000/query"; // default: document mode
+let selectedApi = "http://localhost:5000/query"; // default: Document
 
-  queryModeSelector?.addEventListener('change', (e) => {
-    const mode = e.target.value;
-    selectedApi = mode === "data"
+const pillButtons = document.querySelectorAll('#query-toggle .pill');
+pillButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    pillButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const mode = btn.getAttribute('data-mode');
+    selectedApi = mode === 'datasource'
       ? "http://localhost:8000/query"
       : "http://localhost:5000/query";
   });
+});
+
+
 
   appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
 

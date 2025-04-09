@@ -138,6 +138,32 @@
   border-radius: 50%;
 }
 
+.pill-toggle {
+  display: inline-flex;
+  border-radius: 9999px;
+  background: #e5e7eb; /* Tailwind: bg-gray-200 */
+  padding: 3px;
+  font-size: 12px;
+}
+
+.pill-toggle .pill {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.2s ease-in-out;
+}
+
+.pill-toggle .pill.active {
+  background-color: #2563eb; /* Tailwind: bg-blue-600 */
+  color: white;
+}
+
+
+
 .switch input:checked + .slider {
   background-color: #4CAF50;
 }
@@ -160,10 +186,12 @@
   <span></span>
   <div class="chat-header-actions">
     <span id="clear-chat" title="Clear Chat">🗑️</span>
-    <select id="query-mode" title="Query Mode">
-      <option value="doc">Query with document</option>
-      <option value="data">Query with datasource</option>
-    </select>
+<div class="pill-toggle" id="query-toggle">
+  <button class="pill active" data-mode="document">Document</button>
+  <button class="pill" data-mode="datasource">Datasource</button>
+</div>
+
+
     <label class="switch">
       <input type="checkbox" id="online-toggle">
       <span class="slider"></span>
