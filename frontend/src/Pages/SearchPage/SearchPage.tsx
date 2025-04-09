@@ -140,9 +140,12 @@ const SearchPage = () => {
                     <span className="dot delay-150" />
                     <span className="dot delay-300" />
                   </span>
+                ) : msg.message.length > 300 && msg.sender === "bot" ? (
+                  <ExpandableText text={msg.message} />
                 ) : (
                   msg.message
                 )}
+
                 <div className="text-[10px] mt-1 text-gray-500 text-right">{msg.timestamp}</div>
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
@@ -203,5 +206,23 @@ const SearchPage = () => {
     </div>
   );
 };
+
+const ExpandableText = ({ text }: { text: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  const shortText = text.slice(0, 300);
+
+  return (
+    <div>
+      <span className="whitespace-pre-wrap">{expanded ? text : `${shortText}...`}</span>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="ml-2 text-blue-500 text-xs underline"
+      >
+        {expanded ? "Read less" : "Read more"}
+      </button>
+    </div>
+  );
+};
+
 
 export default SearchPage;
