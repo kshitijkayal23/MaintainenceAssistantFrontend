@@ -11,6 +11,7 @@ interface ChatMessage {
 }
 
 const generateSessionId = () => `session-${Date.now()}`;
+
 const LOCAL_STORAGE_KEY = "chat_history";
 
 const SearchPage = () => {
@@ -66,18 +67,6 @@ const SearchPage = () => {
 
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-  };
-
-  const handleDropdownChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    if (value === "document") {
-      setSelectedApi("http://localhost:5000/query");
-      if (localStorage.getItem("hideDocumentInfo") !== "true") {
-        setShowDocPopup(true);
-      }
-    } else {
-      setSelectedApi("http://localhost:8000/query");
-    }
   };
 
   const handleClearChat = () => {
@@ -161,35 +150,17 @@ const SearchPage = () => {
     ]);
 
     const res = await queryDynamicAPI(input);
-
-    let responseText = "";
-
-    if (selectedApi.includes("5000")) {
-      if (res?.top_matches && res.top_matches.length > 0) {
-        responseText = res.top_matches
-          .map(
-            (match: any, idx: number) =>
-              `📄 Match ${idx + 1}:\n${match.content.trim()}\n\n🔗 Source: ${match.metadata?.source || "Unknown"}`
-          )
-          .join("\n\n");
-      } else {
-        responseText = "No matches found.";
-      }
-    } else if (selectedApi.includes("8000")) {
-      responseText = res.answer || "No response.";
-    } else {
-      responseText = "Unexpected API response.";
-    }
+    const responseText = res.answer || "No response";
 
     setChat((prev) =>
       prev.map((msg) =>
         msg.id === loaderId
           ? {
-              ...msg,
-              message: responseText,
-              timestamp: new Date().toLocaleTimeString(),
-              loading: false,
-            }
+            ...msg,
+            message: responseText,
+            timestamp: new Date().toLocaleTimeString(),
+            loading: false,
+          }
           : msg
       )
     );
@@ -197,14 +168,43 @@ const SearchPage = () => {
     setInput("");
   };
 
+  const handleToggleChange = (value: string) => {
+    if (value === "document") {
+      setSelectedApi("http://localhost:5000/query");
+      if (localStorage.getItem("hideDocumentInfo") !== "true") {
+        setShowDocPopup(true);
+      }
+    } else {
+      setSelectedApi("http://localhost:8000/query");
+    }
+  };
+
+
   return (
     <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <div className="flex gap-3 items-center">
-          <select onChange={handleDropdownChange} className="p-2 border rounded bg-white">
-            <option value="document">Document Upload</option>
-            <option value="datasource">Datasource</option>
-          </select>
+          <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
+            <button
+              onClick={() => handleToggleChange("document")}
+              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("5000")
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600"
+                }`}
+            >
+              Document Query
+            </button>
+            <button
+              onClick={() => handleToggleChange("datasource")}
+              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("8000")
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600"
+                }`}
+            >
+              Datasource Query
+            </button>
+          </div>
+
           {selectedApi.includes("5000") && (
             <input
               type="file"
@@ -254,19 +254,10 @@ const SearchPage = () => {
 
       <div className="flex-1 overflow-y-auto px-4 py-2 pb-40 bg-gray-100">
         {chat.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-          >
+          <div key={msg.id} className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
             <div className="flex items-end max-w-[80%]">
               {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
-              <div
-                className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${
-                  msg.sender === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
-                }`}
-              >
+              <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
                 {msg.loading ? (
                   <span className="typing-dots inline-block w-6 h-3 relative">
                     <span className="dot" />
@@ -297,9 +288,9 @@ const SearchPage = () => {
                     )}
                   </>
                 )}
-                {msg.sender === "bot" ? (
+                {msg.sender === "bot" && (
                   <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
-                ) : null}
+                )}
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
             </div>
@@ -308,7 +299,6 @@ const SearchPage = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Chat input */}
       <form
         onSubmit={onSearchSubmit}
         className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
@@ -334,7 +324,6 @@ const SearchPage = () => {
         </button>
       </form>
 
-      {/* Typing Animation */}
       <style>
         {`
           .typing-dots {
