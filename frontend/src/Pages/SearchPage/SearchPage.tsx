@@ -1,8 +1,7 @@
 import { useState, ChangeEvent, SyntheticEvent, useEffect } from "react";
 import Search from "../../Components/Search/Search";
-import SearchResult from "../../Components/SearchResult/SearchResult";
 
-interface Props {}
+interface Props { }
 
 interface SearchTile {
   id: number;
@@ -60,14 +59,19 @@ const SearchPage = (props: Props) => {
     const result = await queryDynamicAPI(search);
     console.log("API Response:", result);
 
-    if (typeof result === "string" || result.status !== "success") {
+    if (typeof result === "string" || (!result.answer && !result.top_matches)) {
       setServerError("Error fetching data");
     } else {
+      const isDatasource = selectedApi.includes("8000");
+
       const newTile: SearchTile = {
         id: Date.now(),
-        question: result.question,
-        content: result.top_matches[0]?.content || "No content found",
+        question: search,
+        content: isDatasource
+          ? result.answer || "No content found"
+          : result.top_matches?.[0]?.content || result.answer || "No content found",
       };
+
 
       setTiles((prev) => {
         const updated = [newTile, ...prev];
