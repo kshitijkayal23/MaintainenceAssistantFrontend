@@ -1,4 +1,5 @@
 import { useEffect, useState, ChangeEvent, SyntheticEvent, useRef } from "react";
+import { uploadDocumentToAPI } from "../../api";
 
 interface ChatMessage {
   id: number;
@@ -105,32 +106,16 @@ const SearchPage = () => {
     }
   };
 
-  const uploadDocument = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Upload failed");
-
-      const data = await res.json();
-      console.log("Upload response:", data);
-    } catch (err) {
-      console.error("Document upload error:", err);
-    }
-  };
-
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedDoc(file);
-      uploadDocument(file);
+      const message = await uploadDocumentToAPI(file);
+      console.log("Server response:", message);
     }
   };
+
+
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
