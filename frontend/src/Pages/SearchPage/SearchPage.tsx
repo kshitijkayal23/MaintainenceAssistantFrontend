@@ -6,13 +6,39 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   loading?: boolean;
+  session: string;
 }
+
+const generateSessionId = () => `session-${Date.now()}`;
+
+const LOCAL_STORAGE_KEY = "chat_history";
 
 const SearchPage = () => {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [sessionId] = useState(generateSessionId());
   const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Load chat history on mount
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const history = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (history) {
+      setChat(JSON.parse(history));
+    } else {
+      insertWelcomeMessage();
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  // Scroll to bottom when chat updates
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chat));
+  }, [chat]);
 
   const insertWelcomeMessage = () => {
     setChat([
@@ -21,6 +47,7 @@ const SearchPage = () => {
         sender: "bot",
         message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
         timestamp: new Date().toLocaleTimeString(),
+        session: sessionId,
       },
     ]);
   };
@@ -50,8 +77,17 @@ const SearchPage = () => {
   };
 
   const handleClearChat = () => {
-    insertWelcomeMessage();
+    const welcome: ChatMessage = {
+      id: Date.now(),
+      sender: "bot", // now type-safe
+      message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
+      timestamp: new Date().toLocaleTimeString(),
+      session: sessionId,
+    };
+    setChat([welcome]);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([welcome]));
   };
+
 
   const queryDynamicAPI = async (query: string) => {
     try {
@@ -66,44 +102,45 @@ const SearchPage = () => {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   const onSearchSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessageId = Date.now();
 
-    // 1. Append user message
-    setChat(prev => [
+    const loaderId = userMessageId + 1;
+
+    setChat((prev) => [
       ...prev,
       {
         id: userMessageId,
         sender: "user",
         message: input,
         timestamp: new Date().toLocaleTimeString(),
+        session: sessionId,
       },
-    ]);
-
-    // 2. Append bot loader
-    const loaderId = userMessageId + 1;
-    setChat(prev => [
-      ...prev,
       {
         id: loaderId,
         sender: "bot",
         message: "...",
         timestamp: "",
         loading: true,
+        session: sessionId,
       },
     ]);
+
 
     // 3. Fetch response
     const res = await queryDynamicAPI(input);
     const responseText = res.answer || "No response";
 
-    // 4. Update bot loader with actual response
-    setChat(prev =>
-      prev.map(msg =>
-        msg.id === loaderId
+    setChat((prev) =>
+      prev.map((msg) =>
+        msg.id === userMessageId + 1
           ? {
             ...msg,
             message: responseText,
@@ -114,16 +151,16 @@ const SearchPage = () => {
       )
     );
 
-    setInput(""); // clear input box
+    setInput("");
   };
 
 
 
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col flex-grow bg-white h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <select
           onChange={handleDropdownChange}
           className="p-2 border rounded bg-white"
@@ -140,7 +177,8 @@ const SearchPage = () => {
       </div>
 
       {/* Chat log */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 bg-gray-100 min-h-0">
+      <div className="overflow-y-auto px-4 py-2 pb-40 bg-gray-100"
+        style={{ height: "calc(100vh - 132px)" }}>
         {chat.map((msg) => (
           <div
             key={msg.id}
@@ -150,8 +188,8 @@ const SearchPage = () => {
               {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
               <div
                 className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
+                  ? "bg-blue-600 text-white rounded-br-none"
+                  : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
                   }`}
               >
                 {msg.loading ? (
@@ -161,11 +199,30 @@ const SearchPage = () => {
                     <span className="dot delay-300" />
                   </span>
                 ) : msg.message.length > 300 && msg.sender === "bot" ? (
-                  <ExpandableText text={msg.message} />
-                ) : (
-                  msg.message
-                )}
+                  <>
+                    <ExpandableText text={msg.message} />
+                      <button
+                        className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
+                        title="Copy to clipboard"
+                        onClick={() => copyToClipboard(msg.message)}
+                      >
+                        📋
+                      </button>
 
+                  </>
+                ) : (
+                  <>
+                    {msg.message}
+                    {msg.sender === "bot" && (
+                      <button
+                        className="absolute bottom-1 right-2 text-xs text-blue-500 underline"
+                        onClick={() => copyToClipboard(msg.message)}
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </>
+                )}
                 <div className="text-[10px] mt-1 text-gray-500 text-right">{msg.timestamp}</div>
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
@@ -178,7 +235,7 @@ const SearchPage = () => {
       {/* Chat input */}
       <form
         onSubmit={onSearchSubmit}
-        className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end"
+        className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
       >
         <textarea
           className="flex-1 resize-none border border-gray-300 p-3 rounded-lg shadow-sm text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -201,7 +258,7 @@ const SearchPage = () => {
         </button>
       </form>
 
-      {/* Typing Animation Styles */}
+      {/* Typing Animation */}
       <style>
         {`
           .typing-dots {
@@ -230,10 +287,21 @@ const SearchPage = () => {
 const ExpandableText = ({ text }: { text: string }) => {
   const [expanded, setExpanded] = useState(false);
   const shortText = text.slice(0, 300);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (expanded) {
+      setTimeout(() => {
+        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100); // slight delay so DOM has time to render
+    }
+  }, [expanded]);
 
   return (
-    <div>
-      <span className="whitespace-pre-wrap">{expanded ? text : `${shortText}...`}</span>
+    <div ref={contentRef}>
+      <span className="whitespace-pre-wrap">
+        {expanded ? text : `${shortText}...`}
+      </span>
       <button
         onClick={() => setExpanded(!expanded)}
         className="ml-2 text-blue-500 text-xs underline"
@@ -243,6 +311,7 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
+
 
 
 export default SearchPage;
