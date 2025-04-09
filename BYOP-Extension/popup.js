@@ -2,8 +2,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById('chat-input');
   const log = document.getElementById('chat-log');
   const clearBtn = document.getElementById('clear-chat');
+  const avatarSelector = document.getElementById('avatar-selector');
 
-  // Initial greeting
+  let userAvatar = localStorage.getItem('userAvatar') || '🧑';
+  avatarSelector.value = userAvatar;
+
+  avatarSelector.addEventListener('change', () => {
+    userAvatar = avatarSelector.value;
+    localStorage.setItem('userAvatar', userAvatar);
+  });
+
   appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
 
   input.addEventListener('keypress', async function (e) {
@@ -12,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
       appendMessage(msg, 'user');
       input.value = '';
 
+      const loader = appendMessage("...", 'bot', true);
+
       try {
         const response = await fetch("http://localhost:8000/query", {
           method: "POST",
@@ -19,107 +29,88 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ question: msg })
         });
         const result = await response.json();
+
+        loader.remove();
         appendMessage(result.answer || 'No response', 'bot');
       } catch (err) {
+        loader.remove();
         appendMessage("Error: Could not reach backend.", 'bot');
       }
     }
   });
 
-  clearBtn.addEventListener('click', () => {
+  clearBtn?.addEventListener('click', () => {
     log.innerHTML = '';
     appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
   });
 
-  function appendMessage(text, sender) {
-    const msgDiv = document.createElement('div');
-    msgDiv.textContent = text;
-    msgDiv.style.maxWidth = '80%';
-    msgDiv.style.padding = '12px 16px';
-    msgDiv.style.borderRadius = '20px';
-    msgDiv.style.marginBottom = '12px';
-    msgDiv.style.whiteSpace = 'pre-wrap';
-    msgDiv.style.wordWrap = 'break-word';
-    msgDiv.style.fontSize = '14px';
-    msgDiv.style.lineHeight = '1.4';
-    msgDiv.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
-    msgDiv.style.display = 'inline-block';
+  function appendMessage(text, sender, isTyping = false) {
+    const msgWrapper = document.createElement('div');
+    msgWrapper.style.display = 'flex';
+    msgWrapper.style.alignItems = 'flex-end';
+    msgWrapper.style.marginBottom = '10px';
+    msgWrapper.style.flexDirection = sender === 'user' ? 'row-reverse' : 'row';
+
+    const avatar = document.createElement('div');
+    avatar.innerHTML = sender === 'user' ? userAvatar : '🤖';
+    avatar.style.fontSize = '20px';
+    avatar.style.margin = '0 8px';
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('msg', sender);
+    bubble.style.padding = '12px 16px';
+    bubble.style.borderRadius = '16px';
+    bubble.style.maxWidth = '75%';
+    bubble.style.position = 'relative';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.style.wordWrap = 'break-word';
+    bubble.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+    bubble.style.fontSize = '14px';
+    bubble.style.backgroundColor = sender === 'user' ? '#0078D7' : '#f0f0f0';
+    bubble.style.color = sender === 'user' ? '#fff' : '#222';
+
+    const tail = document.createElement('div');
+    tail.style.width = 0;
+    tail.style.height = 0;
+    tail.style.border = '6px solid transparent';
+    tail.style.position = 'absolute';
+    tail.style.top = '8px';
 
     if (sender === 'user') {
-      msgDiv.style.background = 'linear-gradient(135deg, #0078D7, #00a2ff)';
-      msgDiv.style.color = 'white';
-      msgDiv.style.alignSelf = 'flex-end';
-      msgDiv.style.marginLeft = 'auto';
-      msgDiv.style.borderBottomRightRadius = '4px';
+      tail.style.borderRightColor = '#0078D7';
+      tail.style.right = '-12px';
     } else {
-      msgDiv.style.background = '#e4e4e4';
-      msgDiv.style.color = '#222';
-      msgDiv.style.alignSelf = 'flex-start';
-      msgDiv.style.marginRight = 'auto';
-      msgDiv.style.borderBottomLeftRadius = '4px';
+      tail.style.borderLeftColor = '#f0f0f0';
+      tail.style.left = '-12px';
     }
 
-    // Long message: Show more/less
-    if (text.length > 300) {
-      const shortText = text.slice(0, 300) + '...';
-      const span = document.createElement('span');
-      span.textContent = shortText;
+    const timestamp = document.createElement('div');
+    timestamp.style.fontSize = '10px';
+    timestamp.style.color = '#888';
+    timestamp.style.marginTop = '6px';
+    timestamp.textContent = new Date().toLocaleTimeString();
 
-      const toggle = document.createElement('a');
-      toggle.href = '#';
-      toggle.textContent = ' Show more';
-      toggle.style.marginLeft = '8px';
-      toggle.style.fontSize = '12px';
-      toggle.style.color = sender === 'bot' ? '#0078D7' : '#fff';
-      toggle.style.cursor = 'pointer';
-      toggle.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (span.textContent === shortText) {
-          span.textContent = text;
-          toggle.textContent = ' Show less';
-        } else {
-          span.textContent = shortText;
-          toggle.textContent = ' Show more';
-        }
-      });
-
-      msgDiv.textContent = '';
-      msgDiv.appendChild(span);
-      msgDiv.appendChild(toggle);
+    if (isTyping) {
+      bubble.innerHTML = `<span class="typing">...</span>`;
+    } else {
+      if (text.includes('```')) {
+        const codeContent = text.replace(/```/g, '');
+        bubble.innerHTML = `<pre style="background:#272822; color:#fff; padding:10px; border-radius:6px; overflow-x:auto">${codeContent}</pre>`;
+      } else {
+        bubble.innerHTML = text.replace(/\n/g, '<br/>');
+      }
     }
 
-    msgDiv.className = sender;
+    bubble.appendChild(tail);
+    const contentWrapper = document.createElement('div');
+    contentWrapper.appendChild(bubble);
+    contentWrapper.appendChild(timestamp);
 
-    log.appendChild(msgDiv);
+    msgWrapper.appendChild(avatar);
+    msgWrapper.appendChild(contentWrapper);
+    log.appendChild(msgWrapper);
     log.scrollTop = log.scrollHeight;
+
+    return msgWrapper;
   }
-
-  // Inject container inline styles (fallback if CSS fails)
-  Object.assign(document.getElementById('chat-log').style, {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#f7f7f7',
-    height: '400px',
-  });
-
-  Object.assign(input.style, {
-    border: '1px solid #ccc',
-    padding: '12px',
-    fontSize: '14px',
-    width: 'calc(100% - 24px)',
-    margin: '12px',
-    outline: 'none',
-    borderRadius: '6px'
-  });
-
-  Object.assign(clearBtn.style, {
-    cursor: 'pointer',
-    fontSize: '16px',
-    marginLeft: 'auto',
-    marginRight: '8px',
-    marginTop: '6px'
-  });
 });
