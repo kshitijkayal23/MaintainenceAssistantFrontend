@@ -157,7 +157,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
+    <div className="flex flex-col flex-grow bg-white h-[calc(100vh-100px)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
         <select
