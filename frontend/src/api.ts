@@ -4,7 +4,7 @@ interface QueryResponse {
  
 export const queryFlaskAPI = async (question: string): Promise<string | undefined> => {
   try {
-    const response = await fetch("http://localhost:8000/query", {
+    const response = await fetch("http://localhost:5000/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
