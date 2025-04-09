@@ -19,8 +19,9 @@ const SearchPage = () => {
   const [sessionId] = useState(generateSessionId());
   const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [showDocPopup, setShowDocPopup] = useState(() => localStorage.getItem("hideDocumentInfo") !== "true");
+  const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
 
-  // Load chat history on mount
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const history = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -34,7 +35,6 @@ const SearchPage = () => {
     };
   }, []);
 
-  // Scroll to bottom when chat updates
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chat));
@@ -69,17 +69,21 @@ const SearchPage = () => {
   };
 
   const handleDropdownChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setSelectedApi(
-      e.target.value === "document"
-        ? "http://localhost:5000/query"
-        : "http://localhost:8000/query"
-    );
+    const value = e.target.value;
+    if (value === "document") {
+      setSelectedApi("http://localhost:5000/query");
+      if (localStorage.getItem("hideDocumentInfo") !== "true") {
+        setShowDocPopup(true);
+      }
+    } else {
+      setSelectedApi("http://localhost:8000/query");
+    }
   };
 
   const handleClearChat = () => {
     const welcome: ChatMessage = {
       id: Date.now(),
-      sender: "bot", // now type-safe
+      sender: "bot",
       message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
       timestamp: new Date().toLocaleTimeString(),
       session: sessionId,
@@ -87,7 +91,6 @@ const SearchPage = () => {
     setChat([welcome]);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([welcome]));
   };
-
 
   const queryDynamicAPI = async (query: string) => {
     try {
@@ -110,8 +113,21 @@ const SearchPage = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessageId = Date.now();
+    if (selectedApi.includes("5000") && !uploadedDoc) {
+      setChat((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "bot",
+          message: "Please upload required document for context.",
+          timestamp: new Date().toLocaleTimeString(),
+          session: sessionId,
+        },
+      ]);
+      return;
+    }
 
+    const userMessageId = Date.now();
     const loaderId = userMessageId + 1;
 
     setChat((prev) => [
@@ -133,14 +149,12 @@ const SearchPage = () => {
       },
     ]);
 
-
-    // 3. Fetch response
     const res = await queryDynamicAPI(input);
     const responseText = res.answer || "No response";
 
     setChat((prev) =>
       prev.map((msg) =>
-        msg.id === userMessageId + 1
+        msg.id === loaderId
           ? {
             ...msg,
             message: responseText,
@@ -154,20 +168,24 @@ const SearchPage = () => {
     setInput("");
   };
 
-
-
-
   return (
     <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
-        <select
-          onChange={handleDropdownChange}
-          className="p-2 border rounded bg-white"
-        >
-          <option value="document">Document Upload</option>
-          <option value="datasource">Datasource</option>
-        </select>
+        <div className="flex gap-3 items-center">
+          <select onChange={handleDropdownChange} className="p-2 border rounded bg-white">
+            <option value="document">Document Upload</option>
+            <option value="datasource">Datasource</option>
+          </select>
+          {selectedApi.includes("5000") && (
+            <input
+              type="file"
+              accept=".pdf,.txt,.doc,.docx"
+              onChange={(e) => setUploadedDoc(e.target.files?.[0] || null)}
+              className="text-sm"
+            />
+          )}
+        </div>
+
         <button
           className="text-red-500 font-semibold hover:underline"
           onClick={handleClearChat}
@@ -176,21 +194,41 @@ const SearchPage = () => {
         </button>
       </div>
 
-      {/* Chat log */}
+      {showDocPopup && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-white shadow-xl p-6 rounded-xl border w-[90%] max-w-md z-50">
+          <h2 className="text-lg font-semibold mb-2">Document Upload Mode</h2>
+          <p className="text-sm text-gray-700 mb-4">
+            In this mode, you can upload a document to improve query context and accuracy.
+          </p>
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="hide-popup"
+              onChange={(e) => {
+                localStorage.setItem("hideDocumentInfo", e.target.checked.toString());
+              }}
+            />
+            <label htmlFor="hide-popup" className="text-sm text-gray-600">
+              Do not show this again
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <button
+              className="text-sm px-4 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => setShowDocPopup(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto px-4 py-2 pb-40 bg-gray-100">
         {chat.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-          >
+          <div key={msg.id} className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
             <div className="flex items-end max-w-[80%]">
               {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
-              <div
-                className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user"
-                  ? "bg-blue-600 text-white rounded-br-none"
-                  : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"
-                  }`}
-              >
+              <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
                 {msg.loading ? (
                   <span className="typing-dots inline-block w-6 h-3 relative">
                     <span className="dot" />
@@ -200,32 +238,30 @@ const SearchPage = () => {
                 ) : msg.message.length > 300 && msg.sender === "bot" ? (
                   <>
                     <ExpandableText text={msg.message} />
-                      <button
-                        className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
-                        title="Copy to clipboard"
-                        onClick={() => copyToClipboard(msg.message)}
-                      >
-                        📋
-                      </button>
-
+                    <button
+                      className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
+                      title="Copy to clipboard"
+                      onClick={() => copyToClipboard(msg.message)}
+                    >
+                      📋
+                    </button>
                   </>
                 ) : (
                   <>
                     {msg.message}
                     {msg.sender === "bot" && (
                       <button
-                        className="absolute bottom-1 right-2 text-xs text-blue-500 underline"
+                        className="absolute bottom-1 right-2 text-xs text-blue-500"
                         onClick={() => copyToClipboard(msg.message)}
                       >
-                        Copy
+                        📋
                       </button>
                     )}
                   </>
                 )}
-                {msg.sender === "bot" ? (
+                {msg.sender === "bot" && (
                   <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
-                ) : null}
-
+                )}
               </div>
               {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
             </div>
@@ -234,7 +270,6 @@ const SearchPage = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Chat input */}
       <form
         onSubmit={onSearchSubmit}
         className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
@@ -260,7 +295,6 @@ const SearchPage = () => {
         </button>
       </form>
 
-      {/* Typing Animation */}
       <style>
         {`
           .typing-dots {
@@ -295,7 +329,7 @@ const ExpandableText = ({ text }: { text: string }) => {
     if (expanded) {
       setTimeout(() => {
         contentRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 100); // slight delay so DOM has time to render
+      }, 100);
     }
   }, [expanded]);
 
@@ -313,7 +347,5 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
-
-
 
 export default SearchPage;
