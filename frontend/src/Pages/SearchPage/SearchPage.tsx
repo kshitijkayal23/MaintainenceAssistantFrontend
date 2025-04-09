@@ -17,29 +17,40 @@ const LOCAL_STORAGE_KEY = "chat_history";
 const SearchPage = () => {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [sessionId] = useState(generateSessionId());
+  const [sessionId, setSessionId] = useState(generateSessionId());
+  const [sessionNameMap, setSessionNameMap] = useState<Record<string, string>>(() => {
+    const stored = localStorage.getItem("chat_sessions");
+    return stored ? JSON.parse(stored) : {};
+  });
+
   const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showDocPopup, setShowDocPopup] = useState(() => localStorage.getItem("hideDocumentInfo") !== "true");
   const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    const history = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (history) {
-      setChat(JSON.parse(history));
-    } else {
-      insertWelcomeMessage();
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const history = stored ? JSON.parse(stored) : [];
+    setChatHistory(history);
+    if (!history.length) insertWelcomeMessage();
+    else {
+      const latest = history.filter((m: ChatMessage) => m.session === sessionId);
+      if (latest.length) setChat(latest);
+      else insertWelcomeMessage();
     }
-    return () => {
-      document.body.style.overflow = "auto";
-    };
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chat));
+    if (chat.length) {
+      const newHistory = chatHistory.filter(c => c.session !== sessionId).concat(chat);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newHistory));
+      setChatHistory(newHistory);
+    }
   }, [chat]);
+
 
   const insertWelcomeMessage = () => {
     setChat([
@@ -55,7 +66,6 @@ const SearchPage = () => {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    insertWelcomeMessage();
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -64,6 +74,17 @@ const SearchPage = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
+
+  const handleToggleChange = (mode: string) => {
+    if (mode === "document") {
+      setSelectedApi("http://localhost:5000/query");
+      if (localStorage.getItem("hideDocumentInfo") !== "true") {
+        setShowDocPopup(true);
+      }
+    } else {
+      setSelectedApi("http://localhost:8000/query");
+    }
+  };
 
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -101,12 +122,6 @@ const SearchPage = () => {
       const message = await uploadDocumentToAPI(file);
       console.log("Server response:", message);
     }
-  };
-
-
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
   };
 
   const onSearchSubmit = async (e: SyntheticEvent) => {
@@ -168,136 +183,143 @@ const SearchPage = () => {
     setInput("");
   };
 
-  const handleToggleChange = (value: string) => {
-    if (value === "document") {
-      setSelectedApi("http://localhost:5000/query");
-      if (localStorage.getItem("hideDocumentInfo") !== "true") {
-        setShowDocPopup(true);
-      }
-    } else {
-      setSelectedApi("http://localhost:8000/query");
-    }
+  const loadSession = (session: string) => {
+    setSessionId(session);
+    const messages = chatHistory.filter(m => m.session === session);
+    setChat(messages);
   };
 
-
   return (
-    <div className="flex flex-col flex-grow bg-white h-[calc(100vh-60px)]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
-        <div className="flex gap-3 items-center">
-          <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
-            <button
-              onClick={() => handleToggleChange("document")}
-              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("5000")
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600"
-                }`}
-            >
-              Document Query
-            </button>
-            <button
-              onClick={() => handleToggleChange("datasource")}
-              className={`px-4 py-1 rounded-full transition-all duration-300 ${selectedApi.includes("8000")
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600"
-                }`}
-            >
-              Datasource Query
-            </button>
-          </div>
+    <div className="flex h-screen">
+      {/* SIDEBAR */}
+      <div
+        className="transition-all overflow-y-auto border-r bg-gray-100 p-4"
+        style={{
+          width: sidebarOpen ? "256px" : "0px",           // 64 = 256px
+          minWidth: sidebarOpen ? "256px" : "0px",
+          maxWidth: sidebarOpen ? "256px" : "0px",
+          flexShrink: 0,                                   // prevent it from shrinking
+        }}
+      >
+        <button
+          onClick={() => setSidebarOpen(prev => !prev)}
+          className="mb-4 text-sm text-blue-500 hover:underline"
+        >
+          {sidebarOpen ? "Collapse ◀" : "▶"}
+        </button>
 
-          {selectedApi.includes("5000") && (
-            <input
-              type="file"
-              accept=".pdf,.txt,.doc,.docx"
-              onChange={handleFileUpload}
-              className="text-sm"
-            />
-          )}
-        </div>
+        <h2 className="text-lg font-bold mb-2">New Chat</h2>
 
         <button
-          className="text-red-500 font-semibold hover:underline"
-          onClick={handleClearChat}
+          className="w-full bg-blue-600 text-white rounded px-3 py-2 mb-3"
+          onClick={() => {
+            const newSession = generateSessionId();
+            const name = prompt("Enter chat group name:");
+            if (name) {
+              const updatedMap = { ...sessionNameMap, [newSession]: name };
+              setSessionId(newSession);
+              setSessionNameMap(updatedMap);
+              localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+              setChat([{
+                id: Date.now(),
+                sender: "bot",
+                message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
+                timestamp: new Date().toLocaleTimeString(),
+                session: newSession,
+              }]);
+            }
+          }}
         >
-          Clear Chat
+          Start New
         </button>
-      </div>
 
-      {showDocPopup && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-white shadow-xl p-6 rounded-xl border w-[90%] max-w-md z-50">
-          <h2 className="text-lg font-semibold mb-2">Document Upload Mode</h2>
-          <p className="text-sm text-gray-700 mb-4">
-            In this mode, you can upload a document to improve query context and accuracy.
-          </p>
-          <div className="flex items-center gap-2 mb-4">
-            <input
-              type="checkbox"
-              id="hide-popup"
-              onChange={(e) => {
-                localStorage.setItem("hideDocumentInfo", e.target.checked.toString());
-              }}
-            />
-            <label htmlFor="hide-popup" className="text-sm text-gray-600">
-              Do not show this again
-            </label>
-          </div>
-          <div className="flex justify-end">
+        {[...new Set(chatHistory.map(m => m.session))].map(session => (
+          <div key={session} className="flex justify-between items-center mb-2">
             <button
-              className="text-sm px-4 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => setShowDocPopup(false)}
+              onClick={() => loadSession(session)}
+              className={`flex-1 text-left px-3 py-2 rounded ${session === sessionId ? "bg-blue-600 text-white" : "hover:bg-blue-200 text-gray-800"}`}
             >
-              Got it
+              {sessionNameMap[session] || "Untitled"}
+            </button>
+            <button
+              onClick={() => {
+                const updatedHistory = chatHistory.filter(m => m.session !== session);
+                const updatedMap = { ...sessionNameMap };
+                delete updatedMap[session];
+                setChatHistory(updatedHistory);
+                setSessionNameMap(updatedMap);
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
+                localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+              }}
+              className="ml-2 text-red-500 hover:text-red-700"
+              title="Delete session"
+            >
+              🗑️
             </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-2 pb-40 bg-gray-100">
-        {chat.map((msg) => (
-          <div key={msg.id} className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className="flex items-end max-w-[80%]">
-              {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
-              <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
-                {msg.loading ? (
-                  <span className="typing-dots inline-block w-6 h-3 relative">
-                    <span className="dot" />
-                    <span className="dot delay-150" />
-                    <span className="dot delay-300" />
-                  </span>
-                ) : msg.message.length > 300 && msg.sender === "bot" ? (
-                  <>
-                    <ExpandableText text={msg.message} />
-                    <button
-                      className="absolute bottom-1 right-2 text-sm text-blue-500 hover:text-blue-700"
-                      title="Copy to clipboard"
-                      onClick={() => copyToClipboard(msg.message)}
-                    >
-                      📋
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {msg.message}
-                    {msg.sender === "bot" && (
-                      <button
-                        className="absolute bottom-1 right-2 text-xs text-blue-500"
-                        onClick={() => copyToClipboard(msg.message)}
-                      >
-                        📋
-                      </button>
-                    )}
-                  </>
-                )}
-                {msg.sender === "bot" && (
-                  <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
-                )}
-              </div>
-              {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
+
+
+      {/* CHAT PANEL */}
+      <div className="flex flex-col flex-grow bg-white">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
+          <div className="flex gap-3 items-center">
+            <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
+              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Document Query</button>
+              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Datasource Query</button>
+            </div>
+            {selectedApi.includes("5000") && (
+              <input type="file" accept=".pdf,.txt,.doc,.docx" onChange={handleFileUpload} className="text-sm" />
+            )}
+          </div>
+          <button className="text-red-500 font-semibold hover:underline" onClick={handleClearChat}>Clear Chat</button>
+        </div>
+
+        {showDocPopup && (
+          <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-white shadow-xl p-6 rounded-xl border w-[90%] max-w-md z-50">
+            <h2 className="text-lg font-semibold mb-2">Document Upload Mode</h2>
+            <p className="text-sm text-gray-700 mb-4">In this mode, you can upload a document to improve query context and accuracy.</p>
+            <div className="flex items-center gap-2 mb-4">
+              <input type="checkbox" id="hide-popup" onChange={(e) => localStorage.setItem("hideDocumentInfo", e.target.checked.toString())} />
+              <label htmlFor="hide-popup" className="text-sm text-gray-600">Do not show this again</label>
+            </div>
+            <div className="flex justify-end">
+              <button className="text-sm px-4 py-1 rounded bg-blue-600 text-white hover:bg-blue-700" onClick={() => setShowDocPopup(false)}>Got it</button>
             </div>
           </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
+        )}
+
+        {/* Chat Log */}
+        <div className="flex-1 overflow-y-auto px-4 py-2 pb-40 bg-gray-100">
+          {chat.map((msg) => (
+            <div key={msg.id} className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+              <div className="flex items-end max-w-[80%]">
+                {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
+                <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
+                  {msg.loading ? (
+                    <span className="typing-dots inline-block w-6 h-3 relative">
+                      <span className="dot" />
+                      <span className="dot delay-150" />
+                      <span className="dot delay-300" />
+                    </span>
+                  ) : msg.message.length > 300 && msg.sender === "bot" ? (
+                    <ExpandableText text={msg.message} />
+                  ) : (
+                    msg.message
+                  )}
+                  {msg.sender === "bot" && (
+                    <div className="text-[10px] mr-2 text-gray-500 self-end">{msg.timestamp}</div>
+                  )}
+                </div>
+                {msg.sender === "user" && <div className="text-xl ml-2">🧑</div>}
+              </div>
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
 
       <form
         onSubmit={onSearchSubmit}
@@ -324,27 +346,28 @@ const SearchPage = () => {
         </button>
       </form>
 
-      <style>
-        {`
-          .typing-dots {
-            display: flex;
-            gap: 4px;
-          }
-          .typing-dots .dot {
-            width: 6px;
-            height: 6px;
-            background-color: #999;
-            border-radius: 50%;
-            animation: blink 1s infinite;
-          }
-          .typing-dots .dot.delay-150 { animation-delay: 150ms; }
-          .typing-dots .dot.delay-300 { animation-delay: 300ms; }
-          @keyframes blink {
-            0%, 80%, 100% { opacity: 0; }
-            40% { opacity: 1; }
-          }
-        `}
-      </style>
+        <style>
+          {`
+            .typing-dots {
+              display: flex;
+              gap: 4px;
+            }
+            .typing-dots .dot {
+              width: 6px;
+              height: 6px;
+              background-color: #999;
+              border-radius: 50%;
+              animation: blink 1s infinite;
+            }
+            .typing-dots .dot.delay-150 { animation-delay: 150ms; }
+            .typing-dots .dot.delay-300 { animation-delay: 300ms; }
+            @keyframes blink {
+              0%, 80%, 100% { opacity: 0; }
+              40% { opacity: 1; }
+            }
+          `}
+        </style>
+      </div>
     </div>
   );
 };
@@ -364,9 +387,7 @@ const ExpandableText = ({ text }: { text: string }) => {
 
   return (
     <div ref={contentRef}>
-      <span className="whitespace-pre-wrap">
-        {expanded ? text : `${shortText}...`}
-      </span>
+      <span className="whitespace-pre-wrap">{expanded ? text : `${shortText}...`}</span>
       <button
         onClick={() => setExpanded(!expanded)}
         className="ml-2 text-blue-500 text-xs underline"
@@ -376,5 +397,6 @@ const ExpandableText = ({ text }: { text: string }) => {
     </div>
   );
 };
+
 
 export default SearchPage;
