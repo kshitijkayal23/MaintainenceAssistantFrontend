@@ -84,7 +84,8 @@ This React frontend provides a user-friendly interface to:
 - [React](https://reactjs.org/)
 - [Vite](https://vitejs.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
-- [Flask Backend (external)](https://github.com/kshitijkayal23/MaintainenceAssistantBackend)
+- [Flask Backend- doc-query (external)](https://github.com/PrabhatMauryaAbb/Hackathon-RAG)
+- [Flask Backend- query (external)](https://github.com/durgeshjnv2010/BYOP)
 
 ---
 
