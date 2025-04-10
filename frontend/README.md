@@ -28,9 +28,9 @@ This will install all required packages.
 Create a `.env` file in the root directory of the frontend and add the following variable:
 
 ```env
-DOCUMENT_QUERY=http://localhost:5000/doc-query 
-DOCUMENT_UPLOAD=http://localhost:5000/doc-upload 
-DATA_QUERY=http://localhost:8000/query
+METADATA_API_URL= "http://10.140.56.117:8000/query"
+DOC_QA_API_URL= "http://10.140.56.117:8001/doc-query"
+DOC_UPLOAD_API_URL= "http://10.140.56.117:8001/doc-upload"
 ```
 
 This allows the React app to communicate with the Flask backend locally.
