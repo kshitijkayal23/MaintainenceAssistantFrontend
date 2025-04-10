@@ -17,7 +17,11 @@ const LOCAL_STORAGE_KEY = "chat_history";
 const SearchPage = () => {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState(generateSessionId());
+  const [sessionId, setSessionId] = useState(() => {
+    const saved = localStorage.getItem("activeSessionId");
+    return saved || generateSessionId();
+  });
+
   const [sessionNameMap, setSessionNameMap] = useState<Record<string, string>>(() => {
     const stored = localStorage.getItem("chat_sessions");
     return stored ? JSON.parse(stored) : {};
@@ -35,12 +39,9 @@ const SearchPage = () => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     const history = stored ? JSON.parse(stored) : [];
     setChatHistory(history);
-    if (!history.length) insertWelcomeMessage();
-    else {
-      const latest = history.filter((m: ChatMessage) => m.session === sessionId);
-      if (latest.length) setChat(latest);
-      else insertWelcomeMessage();
-    }
+    const hasCurrentSession = history.some((m: ChatMessage) => m.session === sessionId);
+    if (!hasCurrentSession) insertWelcomeMessage();
+    else setChat(history.filter((m: ChatMessage) => m.session === sessionId));
   }, []);
 
   useEffect(() => {
@@ -76,6 +77,26 @@ const SearchPage = () => {
   }, [chat]);
 
   const handleToggleChange = (mode: string) => {
+    const newSessionId = generateSessionId();
+    const name = mode === "document" ? "Document Query" : "Datasource Query";
+
+    // Update state
+    setSessionId(newSessionId);
+    localStorage.setItem("activeSessionId", newSessionId);
+    const updatedMap = { ...sessionNameMap, [newSessionId]: name };
+    setSessionNameMap(updatedMap);
+    localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+
+    // Insert welcome message
+    setChat([{
+      id: Date.now(),
+      sender: "bot",
+      message: "Hello! I'm your Maintenance Assistant. Ask me anything.",
+      timestamp: new Date().toLocaleTimeString(),
+      session: newSessionId,
+    }]);
+
+    // Update API and popup
     if (mode === "document") {
       setSelectedApi("http://localhost:5000/query");
       if (
@@ -223,6 +244,7 @@ const SearchPage = () => {
             if (name) {
               const updatedMap = { ...sessionNameMap, [newSession]: name };
               setSessionId(newSession);
+              localStorage.setItem("activeSessionId", newSession);
               setSessionNameMap(updatedMap);
               localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
               setChat([{
@@ -238,57 +260,72 @@ const SearchPage = () => {
           Start New
         </button>
 
-        {[...new Set(chatHistory.map(m => m.session))].map(session => (
-          <div
-            key={session}
-            className={`flex items-center w-full px-3 py-2 rounded mb-2 justify-between ${session === sessionId ? "bg-blue-600 text-white" : "hover:bg-blue-200 text-gray-800"
-              }`}
-          >
-            <button
-              onClick={() => loadSession(session)}
-              className="flex-1 text-left truncate"
+        {Object.keys(sessionNameMap).length > 0 && (
+          <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">History</h3>
+        )}
+
+        {[...new Set(chatHistory.map(m => m.session))].map(session => {
+          const groupName = sessionNameMap[session] || "New Chat";
+          const messages = chatHistory.filter((m) => m.session === session);
+          const createdTime = messages.length > 0 ? messages[0].timestamp : "";
+
+          return (
+            <div
+              key={session}
+              className={`w-full px-3 py-2 rounded mb-2 ${session === sessionId
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-blue-200 text-gray-800"
+                }`}
             >
-              {sessionNameMap[session] || "Untitled"}
-            </button>
-
-            {session === sessionId && (
-              <div className="flex items-center ml-2 gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const newName = prompt("Rename chat group:", sessionNameMap[session] || "Untitled");
-                    if (newName) {
-                      const updatedMap = { ...sessionNameMap, [session]: newName };
-                      setSessionNameMap(updatedMap);
-                      localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
-                    }
-                  }}
-                  className="text-white hover:text-gray-200 text-sm"
-                  title="Rename"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const updatedHistory = chatHistory.filter(m => m.session !== session);
-                    const updatedMap = { ...sessionNameMap };
-                    delete updatedMap[session];
-                    setChatHistory(updatedHistory);
-                    setSessionNameMap(updatedMap);
-                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
-                    localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
-                  }}
-                  className="text-white hover:text-red-300 text-sm"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
+              <button
+                onClick={() => loadSession(session)}
+                className="w-full text-left truncate font-medium"
+              >
+                {groupName}
+              </button>
+              <div className="text-[10px] text-gray-300 mt-1">
+                {createdTime}
               </div>
-            )}
-          </div>
 
-        ))}
+              {session === sessionId && (
+                <div className="flex items-center mt-1 gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newName = prompt("Rename chat group:", groupName);
+                      if (newName) {
+                        const updatedMap = { ...sessionNameMap, [session]: newName };
+                        setSessionNameMap(updatedMap);
+                        localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+                      }
+                    }}
+                    className="text-white hover:text-gray-200 text-sm"
+                    title="Rename"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const updatedHistory = chatHistory.filter(m => m.session !== session);
+                      const updatedMap = { ...sessionNameMap };
+                      delete updatedMap[session];
+                      setChatHistory(updatedHistory);
+                      setSessionNameMap(updatedMap);
+                      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
+                      localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
+                    }}
+                    className="text-white hover:text-red-300 text-sm"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
 
       </div>
 
