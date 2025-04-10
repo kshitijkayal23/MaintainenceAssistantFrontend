@@ -143,11 +143,19 @@ const SearchPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: query }),
       });
-      return await res.json();
+
+      const data = await res.json();
+
+      if (data?.top_matches?.length > 0) {
+        return { answer: data.top_matches[0].content }; // Use the first match's content
+      }
+
+      return { answer: data.answer || "No relevant content found." };
     } catch (e) {
       return { answer: "Server error. Please try again." };
     }
   };
+
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
