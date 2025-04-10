@@ -23,7 +23,7 @@ const SearchPage = () => {
     return stored ? JSON.parse(stored) : {};
   });
 
-  const [selectedApi, setSelectedApi] = useState("http://localhost:5000/query");
+  const [selectedApi, setSelectedApi] = useState("http://localhost:8000/query");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showDocPopup, setShowDocPopup] = useState(() => localStorage.getItem("hideDocumentInfo") !== "true");
   const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
