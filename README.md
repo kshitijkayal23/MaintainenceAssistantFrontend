@@ -9,7 +9,8 @@
  ## 🔗 Project Repository
  
  You can explore the full frontend & backend codebase here:  
- **[GitHub – frontend folder](https://github.com/kshitijkayal23/MaintainenceAssistantFrontend/tree/main/frontend)**
+ **[GitHub – Chat Browser](https://github.com/kshitijkayal23/MaintainenceAssistantFrontend/tree/main/frontend)**
+ **[Github - Browser Extension](https://github.com/kshitijkayal23/MaintainenceAssistantFrontend/tree/main/BYOP-Extension)**
  
  ---
  
