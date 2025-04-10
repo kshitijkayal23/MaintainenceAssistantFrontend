@@ -3,30 +3,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const log = document.getElementById('chat-log');
   const clearBtn = document.getElementById('clear-chat');
   const closeChatBtn = document.getElementById('close-chat');
-
   const expandInfo = document.getElementById('expand-info');
-expandInfo?.addEventListener('click', () => {
-  window.parent.postMessage({ type: "EXPAND_CHATBOT" }, "*");
-});
 
+  expandInfo?.addEventListener('click', () => {
+    window.parent.postMessage({ type: "EXPAND_CHATBOT" }, "*");
+  });
 
   let userAvatar = '🧑'; 
-let selectedApi = CONFIG.METADATA_API_URL; 
+  let selectedApi = CONFIG.METADATA_API_URL;
 
-const pillButtons = document.querySelectorAll('#query-toggle .pill');
-pillButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    pillButtons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  const pillButtons = document.querySelectorAll('#query-toggle .pill');
+  pillButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pillButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
-    const mode = btn.getAttribute('data-mode');
-    selectedApi = mode === 'datasource'
-      ? CONFIG.METADATA_API_URL
-      : CONFIG.DOC_QA_API_URL;
+      const mode = btn.getAttribute('data-mode');
+      selectedApi = mode === 'datasource'
+        ? CONFIG.METADATA_API_URL
+        : CONFIG.DOC_QA_API_URL;
+    });
   });
-});
-
-
 
   appendMessage("Hello! I'm your Maintenance Assistant. Ask me anything.", 'bot');
 
@@ -38,17 +35,29 @@ pillButtons.forEach(btn => {
       input.value = '';
 
       const loader = appendMessage("...", 'bot', true);
-
+      console.log("Using selected API:", selectedApi);
       try {
         const response = await fetch(selectedApi, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: msg })
         });
-        const result = await response.json();
 
+        const result = await response.json();
         loader.remove();
-        appendMessage(result.answer || 'No response', 'bot');
+
+        let answerText = "No response";
+
+        if (result.top_matches?.[0]?.content) {
+          // Document QA API
+          answerText = result.top_matches[0].content;
+        } else if (result.message?.answer) {
+          // Metadata/Realtime API
+          answerText = result.message.answer;
+        }
+
+        appendMessage(answerText, 'bot');
+
       } catch (err) {
         loader.remove();
         appendMessage("Error: Could not reach backend.", 'bot');
