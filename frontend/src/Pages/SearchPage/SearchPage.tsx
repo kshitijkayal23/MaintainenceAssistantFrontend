@@ -27,16 +27,18 @@ const SearchPage = () => {
     return stored ? JSON.parse(stored) : {};
   });
 
-  const [selectedApi, setSelectedApi] = useState("http://localhost:8000/query");
+  const METADATA_API_URL = import.meta.env.VITE_METADATA_API_URL;
+  const DOC_QA_API_URL = import.meta.env.VITE_DOC_QA_API_URL;
+  const DOC_UPLOAD_API_URL = import.meta.env.VITE_DOC_UPLOAD_API_URL;
+
+  const [selectedApi, setSelectedApi] = useState(METADATA_API_URL);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showDocPopup, setShowDocPopup] = useState(false);
   const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const METADATA_API_URL = import.meta.env.VITE_METADATA_API_URL;
-  const DOC_QA_API_URL = import.meta.env.VITE_DOC_QA_API_URL;
-  const DOC_UPLOAD_API_URL = import.meta.env.VITE_DOC_UPLOAD_API_URL;
+  const [queryMode, setQueryMode] = useState<"document" | "datasource">("datasource");
 
 
 
@@ -81,13 +83,14 @@ const SearchPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  const handleToggleChange = (mode: string) => {
+  const handleToggleChange = (mode: "document" | "datasource") => {
     const newSessionId = generateSessionId();
     const name = mode === "document" ? "Document" : "Datasource";
 
     // Update state
     setSessionId(newSessionId);
     localStorage.setItem("activeSessionId", newSessionId);
+
     const updatedMap = { ...sessionNameMap, [newSessionId]: name };
     setSessionNameMap(updatedMap);
     localStorage.setItem("chat_sessions", JSON.stringify(updatedMap));
@@ -104,17 +107,17 @@ const SearchPage = () => {
     // Update API and popup
     if (mode === "document") {
       setSelectedApi(DOC_QA_API_URL);
-      if (
-        localStorage.getItem("hideDocumentInfo") !== "true" &&
-        !DOC_QA_API_URL.includes("5000")
-      ) {
+      if (localStorage.getItem("hideDocumentInfo") !== "true") {
         setShowDocPopup(true);
       }
     } else {
       setSelectedApi(METADATA_API_URL);
       setShowDocPopup(false);
     }
+
+    setQueryMode(mode); // <--- key change
   };
+
 
 
   const handleSearchChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -330,10 +333,10 @@ const SearchPage = () => {
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10 ">
           <div className="flex gap-3 items-center">
             <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium items-center gap-1">
-              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
+              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${queryMode === "document" ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
                 Document Query
               </button>
-              {selectedApi.includes("5000") && (
+              {queryMode === "document" && (
                 <button
                   title="Info about document upload"
                   onClick={() => setShowDocPopup(true)}
@@ -342,10 +345,23 @@ const SearchPage = () => {
                   (i)
                 </button>
               )}
-              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
+              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${queryMode === "datasource" ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
                 Datasource Query
               </button>
             </div>
+            {queryMode === "document" && (
+              <label
+                className="inline-block px-4 py-2 bg-[#ff0000] text-white rounded-full text-sm cursor-pointer hover:bg-[#cc0000] transition"
+              >
+                Upload File
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
 
             {selectedApi.includes("5000") && (
               <input type="file" accept=".pdf,.txt,.doc,.docx" onChange={handleFileUpload} className="text-sm" />
@@ -357,7 +373,7 @@ const SearchPage = () => {
         {showDocPopup && (
           <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-white shadow-xl p-6 rounded-xl border w-[90%] max-w-md z-50">
             <h2 className="text-lg font-semibold mb-2">Document Upload Mode</h2>
-            <p className="text-sm text-gray-700 mb-4">In this mode, you can upload a document to improve query context and accuracy.</p>
+            <p className="text-sm text-gray-700 mb-4">In this mode, you can upload a document to improve query context and accuracy. Max 100MB size upload</p>
             <div className="flex items-center gap-2 mb-4">
               <input type="checkbox" id="hide-popup" onChange={(e) => localStorage.setItem("hideDocumentInfo", e.target.checked.toString())} />
               <label htmlFor="hide-popup" className="text-sm text-gray-600">Do not show this again</label>
