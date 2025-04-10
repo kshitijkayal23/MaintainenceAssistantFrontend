@@ -202,7 +202,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="flex h-screen h-[calc(100vh-60px)]">
+    <div className="flex h-screen">
       {/* SIDEBAR */}
       <div
         className="transition-all overflow-y-auto border-r bg-gray-100 p-4"
