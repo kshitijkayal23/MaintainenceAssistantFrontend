@@ -48,12 +48,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let answerText = "No response";
 
-        if (result.top_matches?.[0]?.content) {
+        if (result.message?.top_matches?.[0]?.content) {
           // Document QA API
-          answerText = result.top_matches[0].content;
+          answerText = result.message?.top_matches[0].content;
         } else if (result.message?.answer) {
           // Metadata/Realtime API
-          answerText = result.message.answer;
+          answerText = result.message?.answer;
         }
 
         appendMessage(answerText, 'bot');
