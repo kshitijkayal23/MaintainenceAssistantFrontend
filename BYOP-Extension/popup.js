@@ -11,7 +11,7 @@ expandInfo?.addEventListener('click', () => {
 
 
   let userAvatar = '🧑'; 
-let selectedApi = "http://localhost:5000/query"; // default: Document
+let selectedApi = CONFIG.METADATA_API_URL; 
 
 const pillButtons = document.querySelectorAll('#query-toggle .pill');
 pillButtons.forEach(btn => {
@@ -21,8 +21,8 @@ pillButtons.forEach(btn => {
 
     const mode = btn.getAttribute('data-mode');
     selectedApi = mode === 'datasource'
-      ? "http://localhost:8000/query"
-      : "http://localhost:5000/query";
+      ? CONFIG.METADATA_API_URL
+      : CONFIG.DOC_QA_API_URL;
   });
 });
 
