@@ -1,27 +1,28 @@
 interface QueryResponse {
   answer: string;
 }
- 
+
+// Environment variables
+const DOC_QA_API_URL = import.meta.env.VITE_DOC_QA_API_URL;
+const DOC_UPLOAD_API_URL = import.meta.env.VITE_DOC_UPLOAD_API_URL;
+
 export const queryFlaskAPI = async (question: string): Promise<string | undefined> => {
   try {
-    const response = await fetch("http://localhost:5000/query", {
+    const response = await fetch(`${DOC_QA_API_URL}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ question })
     });
- 
-    // Check if the response status indicates a successful request.
+
     if (!response.ok) {
-      // Try to extract error details from the response.
       const errorData = await response.json().catch(() => ({}));
       const errorMessage =
-        (typeof errorData?.message === "string" ? errorData.message : response.statusText) ||
-        "Unknown error occurred";
+        typeof errorData?.message === "string" ? errorData.message : response.statusText;
       throw new Error(errorMessage);
     }
- 
+
     const data = (await response.json()) as QueryResponse;
     return data.answer;
   } catch (error: unknown) {
@@ -39,7 +40,7 @@ export const uploadDocumentToAPI = async (file: File): Promise<string> => {
   formData.append("file", file);
 
   try {
-    const response = await fetch("http://localhost:5000/upload", {
+    const response = await fetch(`${DOC_UPLOAD_API_URL}`, {
       method: "POST",
       body: formData,
     });

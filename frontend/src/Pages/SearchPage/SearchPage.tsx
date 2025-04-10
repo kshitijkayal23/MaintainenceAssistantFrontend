@@ -34,6 +34,11 @@ const SearchPage = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const METADATA_API_URL = import.meta.env.VITE_METADATA_API_URL;
+  const DOC_QA_API_URL = import.meta.env.VITE_DOC_QA_API_URL;
+  const DOC_UPLOAD_API_URL = import.meta.env.VITE_DOC_UPLOAD_API_URL;
+
+
 
   useEffect(() => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -98,15 +103,15 @@ const SearchPage = () => {
 
     // Update API and popup
     if (mode === "document") {
-      setSelectedApi("http://localhost:5000/query");
+      setSelectedApi(DOC_QA_API_URL);
       if (
         localStorage.getItem("hideDocumentInfo") !== "true" &&
-        !selectedApi.includes("5000")
+        !DOC_QA_API_URL.includes("5000")
       ) {
         setShowDocPopup(true);
       }
     } else {
-      setSelectedApi("http://localhost:8000/query");
+      setSelectedApi(METADATA_API_URL);
       setShowDocPopup(false);
     }
   };
