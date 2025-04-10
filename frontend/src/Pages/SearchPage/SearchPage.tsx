@@ -29,7 +29,7 @@ const SearchPage = () => {
 
   const [selectedApi, setSelectedApi] = useState("http://localhost:8000/query");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [showDocPopup, setShowDocPopup] = useState(() => localStorage.getItem("hideDocumentInfo") !== "true");
+  const [showDocPopup, setShowDocPopup] = useState(false);
   const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -215,7 +215,7 @@ const SearchPage = () => {
       >
         <button
           onClick={() => setSidebarOpen(prev => !prev)}
-          className="mb-4 text-sm text-blue-500 hover:underline"
+          className="mb-4 text-sm text-[#ff0000] hover:underline"
         >
           {sidebarOpen ? "Collapse ◀" : "▶"}
         </button>
@@ -223,7 +223,7 @@ const SearchPage = () => {
         <h2 className="text-lg font-bold mb-2">New Chat</h2>
 
         <button
-          className="w-full bg-blue-600 text-white rounded px-3 py-2 mb-3"
+          className="w-full bg-[#ff0000] text-white rounded px-3 py-2 mb-3"
           onClick={() => {
             const newSession = generateSessionId();
             const name = prompt("Enter chat group name:");
@@ -259,7 +259,7 @@ const SearchPage = () => {
             <div
               key={session}
               className={`w-full px-3 py-2 rounded mb-2 ${session === sessionId
-                ? "bg-blue-600 text-white"
+                ? "bg-[#ff0000] text-white"
                 : "hover:bg-blue-200 text-gray-800"
                 }`}
             >
@@ -326,10 +326,24 @@ const SearchPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
           <div className="flex gap-3 items-center">
-            <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
-              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Document Query</button>
-              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Datasource Query</button>
+            <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium items-center gap-1">
+              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
+                Document Query
+              </button>
+              {selectedApi.includes("5000") && (
+                <button
+                  title="Info about document upload"
+                  onClick={() => setShowDocPopup(true)}
+                  className="text-blue-500 text-xs px-2 py-1"
+                >
+                  (i)
+                </button>
+              )}
+              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
+                Datasource Query
+              </button>
             </div>
+
             {selectedApi.includes("5000") && (
               <input type="file" accept=".pdf,.txt,.doc,.docx" onChange={handleFileUpload} className="text-sm" />
             )}
@@ -346,7 +360,7 @@ const SearchPage = () => {
               <label htmlFor="hide-popup" className="text-sm text-gray-600">Do not show this again</label>
             </div>
             <div className="flex justify-end">
-              <button className="text-sm px-4 py-1 rounded bg-blue-600 text-white hover:bg-blue-700" onClick={() => setShowDocPopup(false)}>Got it</button>
+              <button className="text-sm px-4 py-1 rounded bg-[#ff0000] text-white hover:bg-blue-700" onClick={() => setShowDocPopup(false)}>Got it</button>
             </div>
           </div>
         )}
@@ -357,7 +371,7 @@ const SearchPage = () => {
             <div key={msg.id} className={`flex mb-3 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
               <div className="flex items-end max-w-[80%]">
                 {msg.sender === "bot" && <div className="text-xl mr-2">🤖</div>}
-                <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
+                <div className={`relative p-3 rounded-2xl shadow-md text-sm whitespace-pre-wrap ${msg.sender === "user" ? "bg-[#ff0000] text-white rounded-br-none" : "bg-white text-gray-900 border-l-4 border-blue-500 rounded-bl-none"}`}>
                   {msg.loading ? (
                     <span className="typing-dots inline-block w-6 h-3 relative">
                       <span className="dot" />
@@ -380,30 +394,30 @@ const SearchPage = () => {
           <div ref={bottomRef} />
         </div>
 
-      <form
-        onSubmit={onSearchSubmit}
-        className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
-      >
-        <textarea
-          className="flex-1 resize-none border border-gray-300 p-3 rounded-lg shadow-sm text-sm outline-none focus:ring-2 focus:ring-blue-500"
-          rows={1}
-          placeholder="Ask something..."
-          value={input}
-          onChange={handleSearchChange}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              onSearchSubmit(e);
-            }
-          }}
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+        <form
+          onSubmit={onSearchSubmit}
+          className="px-4 py-3 bg-white border-t border-gray-300 flex gap-2 items-end sticky bottom-0 z-10"
         >
-          Send
-        </button>
-      </form>
+          <textarea
+            className="flex-1 resize-none border border-gray-300 p-3 rounded-lg shadow-sm text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            rows={1}
+            placeholder="Ask something..."
+            value={input}
+            onChange={handleSearchChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSearchSubmit(e);
+              }
+            }}
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#ff0000] text-white rounded-lg hover:bg-[#cc0000] transition text-sm"
+          >
+            Send
+          </button>
+        </form>
 
         <style>
           {`
@@ -449,7 +463,7 @@ const ExpandableText = ({ text }: { text: string }) => {
       <span className="whitespace-pre-wrap">{expanded ? text : `${shortText}...`}</span>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="ml-2 text-blue-500 text-xs underline"
+        className="ml-2 text-[#ff0000] text-xs underline"
       >
         {expanded ? "Read less" : "Read more"}
       </button>
