@@ -1,54 +1,109 @@
-# React + TypeScript + Vite
+# 🧠 Maintenance Assistant Frontend (React + Vite + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is the **frontend UI client** for the APM-RAG-based Maintenance Assistant system, built using **React**, **Vite**, and **TypeScript**. It connects to a Flask-based backend that handles document upload, embedding, and natural language query capabilities.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ⚙️ Run the Application
 
-## Expanding the ESLint configuration
+### 1. Clone the Repository
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+git clone https://github.com/kshitijkayal23/MaintainenceAssistantFrontend
+cd MaintainenceAssistantFrontend/frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install Dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
 ```
+
+This will install all required packages.
+
+---
+
+### 3. Environment Configuration
+
+Create a `.env` file in the root directory of the frontend and add the following variable:
+
+```env
+DOCUMENT_QUERY=http://localhost:5000/doc-query 
+DOCUMENT_UPLOAD=http://localhost:5000/doc-upload 
+DATA_QUERY=http://localhost:8000/query
+```
+
+This allows the React app to communicate with the Flask backend locally.
+
+---
+
+### 4. Start the Development Server
+
+```bash
+npm run dev
+```
+
+This will open the frontend app in your default browser (typically at `http://localhost:5173`).
+
+---
+
+## 🌐 API Endpoints Used
+
+This frontend integrates with two primary endpoints from the backend:
+
+### 📄 `/doc-upload`
+
+- Allows users to upload **PDF documents** or **content URLs**.
+- Backend reads content, splits it into chunks, and generates embeddings for semantic search.
+
+### ❓ `/doc-query`
+
+- Accepts **natural language questions**.
+- Returns the most contextually relevant document snippets using vector similarity search from stored embeddings.
+
+### ❓ `/query`
+
+- Accepts **natural language questions**.
+- Returns the asset information from timescale database using llm.
+
+---
+
+## 🧹 About the UI Client
+
+This React frontend provides a user-friendly interface to:
+
+- Upload documentation for context-aware question answering.
+- Ask queries in simple English and get intelligent responses based on embedded content.
+- Handle PDF uploads, display processing status, and return answers in a structured format.
+- Ensure offline-compatible, efficient user experience in industrial or enterprise environments.
+
+---
+
+## 🚀 Built With
+
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Flask Backend (external)](https://github.com/kshitijkayal23/MaintainenceAssistantBackend)
+
+---
+
+## Team members-
+
+- Prabhat Maurya
+- Durgesh Kumar
+- Akshita Choudhury
+- Kshitij Kayal
+- Bhennett Mithran
+- Sakthi Sowmya S
+
+---
+
+## 📄 License
+
+MIT License © 2024
+
+Developed by ABB - BYOP
+
+
+
