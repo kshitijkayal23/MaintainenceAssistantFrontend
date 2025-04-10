@@ -264,7 +264,7 @@ const SearchPage = () => {
           <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">History</h3>
         )}
 
-        {[...new Set(chatHistory.map(m => m.session))].map(session => {
+        {Object.keys(sessionNameMap).map(session => {
           const groupName = sessionNameMap[session] || "New Chat";
           const messages = chatHistory.filter((m) => m.session === session);
           const createdTime = messages.length > 0 ? messages[0].timestamp : "";
