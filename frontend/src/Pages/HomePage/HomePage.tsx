@@ -326,10 +326,24 @@ const SearchPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
           <div className="flex gap-3 items-center">
-            <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium">
-              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Document Query</button>
-              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>Datasource Query</button>
+            <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium items-center gap-1">
+              <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>
+                Document Query
+              </button>
+              {selectedApi.includes("5000") && (
+                <button
+                  title="Info about document upload"
+                  onClick={() => setShowDocPopup(true)}
+                  className="text-blue-500 text-xs px-2 py-1"
+                >
+                  (i)
+                </button>
+              )}
+              <button onClick={() => handleToggleChange("datasource")} className={`px-4 py-1 rounded-full ${selectedApi.includes("8000") ? "bg-blue-600 text-white" : "text-gray-600"}`}>
+                Datasource Query
+              </button>
             </div>
+
             {selectedApi.includes("5000") && (
               <input type="file" accept=".pdf,.txt,.doc,.docx" onChange={handleFileUpload} className="text-sm" />
             )}
