@@ -2,7 +2,12 @@
  # 🧩 Maintenance Assistant by Team BYOP
  
  Welcome to the **Maintenance Assistant** React application!  
- This UI provides an intuitive interface to interact with the backend AI assistant for document understanding, query support, and smart recommendations.
+ 
+ This UI provides an intuitive interface to interact with the backend AI assistant for document understanding, query support, and smart data provider. 
+ 
+ This application is bundled along with the **Maintenance Assistant Extension** as a local browser extension.
+
+ The **Maintenance Assistant Extension** is a lightweight, local-first chatbot that allows users to query asset metadata and document-based data directly from any webpage. It works in sync with your backend APIs and supports toggling between datasource and document query modes.
  
  ---
  
