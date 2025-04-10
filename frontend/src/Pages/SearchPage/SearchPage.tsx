@@ -202,7 +202,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen h-[calc(100vh-60px)]">
       {/* SIDEBAR */}
       <div
         className="transition-all overflow-y-auto border-r bg-gray-100 p-4"
@@ -319,12 +319,10 @@ const SearchPage = () => {
 
       </div>
 
-
-
       {/* CHAT PANEL */}
-      <div className="flex flex-col flex-grow bg-white">
+      <div className="flex flex-col flex-grow bg-white ">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-white sticky top-0 z-10 ">
           <div className="flex gap-3 items-center">
             <div className="relative inline-flex p-1 bg-gray-200 rounded-full text-sm font-medium items-center gap-1">
               <button onClick={() => handleToggleChange("document")} className={`px-4 py-1 rounded-full ${selectedApi.includes("5000") ? "bg-[#ff0000] text-white" : "text-gray-600"}`}>
