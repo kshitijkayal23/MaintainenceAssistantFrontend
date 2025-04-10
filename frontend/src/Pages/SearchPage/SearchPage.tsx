@@ -211,6 +211,27 @@ const SearchPage = () => {
 
   return (
     <div className="flex h-screen">
+      {/* SIDEBAR TOGGLER – always visible on the left */}
+      <div
+        className="absolute top-4 left-0 z-50 group"
+        style={{
+          transform: sidebarOpen ? "translateX(256px)" : "translateX(0)",
+          transition: "transform 0.3s ease-in-out",
+        }}
+      >
+        <div
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        >
+          <button
+            onClick={() => setSidebarOpen(prev => !prev)}
+            className="text-xs text-white bg-[#ff0000] px-1 py-1 rounded-r hover:bg-[#cc0000]"
+          >
+            {sidebarOpen ? "◀" : "▶"}
+          </button>
+        </div>
+      </div>
+
+      
       {/* SIDEBAR */}
       <div
         className="transition-all overflow-y-auto border-r bg-gray-100 p-4"
@@ -225,7 +246,6 @@ const SearchPage = () => {
           onClick={() => setSidebarOpen(prev => !prev)}
           className="mb-4 text-sm text-[#ff0000] hover:underline"
         >
-          {sidebarOpen ? "Collapse ◀" : "▶"}
         </button>
 
         <h2 className="text-lg font-bold mb-2">New Chat</h2>
