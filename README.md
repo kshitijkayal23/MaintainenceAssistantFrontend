@@ -3,7 +3,7 @@
  
  Welcome to the **Maintenance Assistant** React application!  
  
- This UI provides an intuitive interface to interact with the backend AI assistant for document understanding, query support, and smart data provider. 
+ This UI provides an intuitive interface to interact with the backend AI assistant for document understanding, query support, and data provider. 
  
  This application is bundled along with the **Maintenance Assistant Extension** as a local browser extension.
 
