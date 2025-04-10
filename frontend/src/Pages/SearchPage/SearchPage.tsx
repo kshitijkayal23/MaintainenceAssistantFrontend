@@ -154,20 +154,6 @@ const SearchPage = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    if (selectedApi.includes("5000") && !uploadedDoc) {
-      setChat((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          sender: "bot",
-          message: "Please upload required document for context.",
-          timestamp: new Date().toLocaleTimeString(),
-          session: sessionId,
-        },
-      ]);
-      return;
-    }
-
     const userMessageId = Date.now();
     const loaderId = userMessageId + 1;
 
